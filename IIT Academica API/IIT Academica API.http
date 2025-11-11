@@ -1,0 +1,6 @@
+@IIT_Academica_API_HostAddress = http://localhost:5030
+
+GET {{IIT_Academica_API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
