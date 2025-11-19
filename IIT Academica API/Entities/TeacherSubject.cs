@@ -1,26 +1,34 @@
-﻿namespace IIT_Academica_API.Entities
+﻿using IIT_Academica_API.Entities;
+using System.Collections.Generic;
+
+namespace IIT_Academica_API.Entities
 {
+    // Reworked: This is the core entity representing a unique class section 
+    // (e.g., "Intro to C++ - Fall 2025")
     public class TeacherSubject
     {
-        // Primary Key (PK)
         public int Id { get; set; }
 
-        // Core Properties
+        // REQUIRED: The name/title of this class section
         public string Title { get; set; }
-        public string RegistrationCode { get; set; } // The secret code for enrollment (must be unique)
 
-        // Foreign Key (FK) - Link to the User (Teacher)
+        // REQUIRED: The unique code students use to register (e.g., "CS101-FALL-A")
+        public string RegistrationCode { get; set; }
+
+        // REQUIRED: Foreign Key to the assigned teacher (Assuming string for ApplicationUser ID)
         public int TeacherId { get; set; }
 
+
         // Navigation Properties
+        public ApplicationUser? Teacher { get; set; } // The assigned professor
 
-        // Many-to-1: The specific teacher
-        public User? Teacher { get; set; }
-
-        // 1-to-Many: Materials in this subject
+        // Links to materials uploaded by the teacher
         public ICollection<CourseMaterial>? CourseMaterials { get; set; }
 
-        // 1-to-Many: Students enrolled in this subject
+        // Links to students registered for this specific section
         public ICollection<Enrollment>? Enrollments { get; set; }
+
+        // Links to attendance records taken in this class
+        public ICollection<AttendanceRecord>? AttendanceSessions { get; set; }
     }
 }

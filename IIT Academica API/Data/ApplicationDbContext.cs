@@ -1,58 +1,96 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using IIT_Academica_API.Entities; // Ensure this matches your Entities namespace
+using IIT_Academica_API.Entities;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity; // Needed for IdentityRole<int> etc.
 
-namespace IIT_Academica_API.Data
+// FIX 1: Change inheritance to use int (TKey) for all Identity-related tables
+public class ApplicationDbContext : IdentityDbContext<
+    ApplicationUser,
+    IdentityRole<int>, // Role key type
+    int,              // User key type
+    IdentityUserClaim<int>,
+    IdentityUserRole<int>,
+    IdentityUserLogin<int>,
+    IdentityRoleClaim<int>,
+    IdentityUserToken<int>>
 {
-    public class ApplicationDbContext : DbContext
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        : base(options)
     {
-        // Constructor required for Dependency Injection
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options)
-        {
-        }
+    }
 
-        // Define a DbSet for each entity (this creates your tables)
-        public DbSet<User> Users { get; set; }
-        public DbSet<TeacherSubject> TeacherSubjects { get; set; }
-        public DbSet<CourseMaterial> CourseMaterials { get; set; }
-        public DbSet<Enrollment> Enrollments { get; set; }
+    // ADDED: The new central class instance entity
+    public DbSet<TeacherSubject> TeacherSubjects { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            // 1. TEACHER-SUBJECT Relationship: Block deletion of a User if they teach a subject.
-            modelBuilder.Entity<TeacherSubject>()
-                .HasOne(ts => ts.Teacher) // The subject has one Teacher
-                .WithMany(u => u.TaughtSubjects) // The User can have many TaughtSubjects
-                .HasForeignKey(ts => ts.TeacherId)
-                .OnDelete(DeleteBehavior.Restrict); // <-- BLOCKS DELETION!
+    public DbSet<CourseMaterial> CourseMaterials { get; set; }
+    public DbSet<Enrollment> Enrollments { get; set; }
+    public DbSet<AttendanceRecord> AttendanceRecords { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
 
-            // 2. STUDENT-ENROLLMENT Relationship: Block deletion of a User if they have an active enrollment.
-            modelBuilder.Entity<Enrollment>()
-                .HasOne(e => e.Student) // The Enrollment has one Student
-                .WithMany(u => u.Enrollments) // The User can have many Enrollments
-                .HasForeignKey(e => e.StudentId)
-                .OnDelete(DeleteBehavior.Restrict); // <-- BLOCKS DELETION!
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // Must be called first to configure Identity tables
+        base.OnModelCreating(modelBuilder);
 
-            // 3. Subject-Material Relationship (Material is a child of Subject)
-            modelBuilder.Entity<CourseMaterial>()
-                .HasOne(cm => cm.TeacherSubject)
-                .WithMany(ts => ts.CourseMaterials)
-                .OnDelete(DeleteBehavior.Cascade); // Safe to CASCADE here, if subject is deleted, materials must go.
+        // -------------------------------------------------------------
+        // 1. TeacherSubject Relationships (Teacher is an int key)
+        // -------------------------------------------------------------
 
-            // 4. Subject-Enrollment Relationship (Enrollment is a child of Subject)
-            modelBuilder.Entity<Enrollment>()
-                .HasOne(e => e.TeacherSubject)
-                .WithMany(ts => ts.Enrollments)
-                .OnDelete(DeleteBehavior.Cascade); // Safe to CASCADE here.
+        // Configure the one-to-many relationship between ApplicationUser (Teacher) and TeacherSubject
+        modelBuilder.Entity<TeacherSubject>()
+            .HasOne(ts => ts.Teacher) // The TeacherSubject has one Teacher
+                                      // NOTE: You must ensure you have added 'public ICollection<TeacherSubject> TaughtTeacherSubjects { get; set; }' to ApplicationUser.cs
+            .WithMany(u => u.TaughtTeacherSubjects)
+            .HasForeignKey(ts => ts.TeacherId) // TeacherId is now int
+            .OnDelete(DeleteBehavior.Restrict);
 
-            // Configure UNIQUE indexes 
-            modelBuilder.Entity<User>()
-                .HasIndex(u => u.Email)
-                .IsUnique();
+        // Ensure the RegistrationCode is unique for enrollment
+        modelBuilder.Entity<TeacherSubject>()
+            .HasIndex(ts => ts.RegistrationCode)
+            .IsUnique();
 
-            modelBuilder.Entity<TeacherSubject>()
-                .HasIndex(ts => ts.RegistrationCode)
-                .IsUnique();
-        }
+        // -------------------------------------------------------------
+        // 2. Updated Relationships (Now linking to TeacherSubject)
+        // -------------------------------------------------------------
+
+        // CourseMaterial now links to TeacherSubject
+        modelBuilder.Entity<CourseMaterial>()
+            .HasOne(cm => cm.TeacherSubject)
+            .WithMany(ts => ts.CourseMaterials)
+            .HasForeignKey(cm => cm.TeacherSubjectId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Enrollment now links to TeacherSubject
+        modelBuilder.Entity<Enrollment>()
+            .HasOne(e => e.TeacherSubject)
+            .WithMany(ts => ts.Enrollments)
+            .HasForeignKey(e => e.TeacherSubjectId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // AttendanceRecord now links to TeacherSubject
+        modelBuilder.Entity<AttendanceRecord>()
+            .HasOne(ar => ar.TeacherSubject)
+            .WithMany(ts => ts.AttendanceSessions)
+            .HasForeignKey(ar => ar.TeacherSubjectId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+
+        // -------------------------------------------------------------
+        // 3. Enrollment and User Relationships (StudentId is now an int key)
+        // -------------------------------------------------------------
+
+        // Enrollment to Student (User)
+        modelBuilder.Entity<Enrollment>()
+            .HasOne(e => e.Student)
+            .WithMany(u => u.Enrollments)
+            .HasForeignKey(e => e.StudentId) // StudentId is now int
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Other Configuration (Remains the same)
+        modelBuilder.Entity<ApplicationUser>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
+
+        // Note: All obsolete Space configurations were successfully removed.
     }
 }
