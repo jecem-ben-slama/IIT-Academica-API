@@ -1,11 +1,7 @@
-﻿// Controllers/TeacherSubjectsController.cs
+﻿// Controllers/SubjectController.cs
 using IIT_Academica_API.Entities;
-using IIT_Academica_API.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -21,7 +17,7 @@ public class SubjectsController : ControllerBase
     private ISubjectRepository Repository => _unitOfWork.Subjects;
 
     // -------------------------------------------
-    // C R E A T E (POST) - EnrollmentCount is 0
+    // C R E A T E (POST)
     // -------------------------------------------
     [HttpPost("createSubject")]
     [Authorize(Roles = "Admin")]
@@ -42,7 +38,6 @@ public class SubjectsController : ControllerBase
         var createdEntity = await Repository.AddAsync(SubjectEntity);
         await _unitOfWork.CompleteAsync();
 
-        // Must call the new method to load Teacher (and Enrollments, though count is 0 here)
         var entityWithTeacher = await Repository.GetByIdWithTeacherAndEnrollmentsAsync(createdEntity.Id);
 
         if (entityWithTeacher == null) return NotFound();
@@ -54,20 +49,20 @@ public class SubjectsController : ControllerBase
             SubjectName = entityWithTeacher.Title,
             TeacherId = entityWithTeacher.TeacherId,
             TeacherFullName = entityWithTeacher.Teacher?.Name + " " + entityWithTeacher.Teacher?.LastName,
-            EnrollmentCount = 0 // Newly created subject has 0 enrollments
+            EnrollmentCount = 0
         };
 
+        // Uses the simple GET method defined below
         return CreatedAtAction(nameof(GetSubjectById), new { id = returnDto.Id }, returnDto);
     }
 
     // -------------------------------------------
-    // R E A D A L L (GET) - Uses GetAllWithTeacherAndEnrollmentsAsync
+    // R E A D A L L (GET)
     // -------------------------------------------
     [HttpGet("getAll")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<SubjectDTO>>> GetAllSubjects()
     {
-        // 🚀 NEW: Call the method that includes Enrollments
         var entities = await Repository.GetAllWithTeacherAndEnrollmentsAsync();
 
         var dtos = entities.Select(e => new SubjectDTO
@@ -77,7 +72,6 @@ public class SubjectsController : ControllerBase
             SubjectName = e.Title,
             TeacherId = e.TeacherId,
             TeacherFullName = e.Teacher?.Name + " " + e.Teacher?.LastName,
-            // 🚀 NEW: Use the loaded collection count
             EnrollmentCount = e.Enrollments?.Count ?? 0
         }).ToList();
 
@@ -85,13 +79,12 @@ public class SubjectsController : ControllerBase
     }
 
     // -------------------------------------------
-    // R E A D B Y I D (GET) - Uses GetByIdWithTeacherAndEnrollmentsAsync
+    // R E A D B Y I D (GET) (Used by GetAll and CreatedAtAction)
     // -------------------------------------------
     [HttpGet("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<SubjectDTO>> GetSubjectById(int id)
     {
-        // 🚀 NEW: Call the method that includes Enrollments
         var entity = await Repository.GetByIdWithTeacherAndEnrollmentsAsync(id);
 
         if (entity == null)
@@ -106,13 +99,66 @@ public class SubjectsController : ControllerBase
             SubjectName = entity.Title,
             TeacherId = entity.TeacherId,
             TeacherFullName = entity.Teacher?.Name + " " + entity.Teacher?.LastName,
-            // 🚀 NEW: Use the loaded collection count
             EnrollmentCount = entity.Enrollments?.Count ?? 0
         };
 
         return Ok(dto);
     }
 
-    // ... UPDATE and DELETE methods (No change needed) ...
+    // --- Missing CRUD Actions ---
 
+    // -------------------------------------------
+    // U P D A T E (PUT)
+    // -------------------------------------------
+    [HttpPut("updateSubject/{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateSubject(int id, UpdateSubjectDTO updateDto)
+    {
+        if (id != updateDto.Id)
+        {
+            return BadRequest("ID mismatch between route and request body.");
+        }
+
+        var existingEntity = await Repository.GetByIdAsync(id);
+
+        if (existingEntity == null)
+        {
+            return NotFound();
+        }
+
+        // 1. Map DTO changes onto the existing Entity
+        existingEntity.Title = updateDto.SubjectName;
+        existingEntity.TeacherId = updateDto.TeacherId;
+
+        // 2. Mark as modified and commit
+        await Repository.UpdateAsync(existingEntity);
+        await _unitOfWork.CompleteAsync();
+
+        // Return 204 No Content for successful update
+        return NoContent();
+    }
+
+    // -------------------------------------------
+    // D E L E T E (DELETE)
+    // -------------------------------------------
+    [HttpDelete("delete/{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> DeleteSubject(int id)
+    {
+        // DeleteAsync finds the entity and removes it
+        var deleted = await Repository.DeleteAsync(id);
+
+        // Commit the transaction to save the deletion (assuming DeleteAsync does NOT call SaveChangesAsync)
+        // NOTE: If your Repository.DeleteAsync calls SaveChangesAsync internally, remove this line.
+        // Based on your provided Repository, it seems DeleteAsync only removes the entity.
+        await _unitOfWork.CompleteAsync();
+
+        if (!deleted)
+        {
+            return NotFound();
+        }
+
+        // Return 204 No Content for successful deletion
+        return NoContent();
+    }
 }

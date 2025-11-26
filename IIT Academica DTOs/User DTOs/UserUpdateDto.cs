@@ -3,12 +3,11 @@
 public class UserUpdateDto
 {
     [Required]
-    public int Id { get; set; }
+    [Range(1, int.MaxValue, ErrorMessage = "Subject Id must be positive number")]
 
-    [Required]
+    public int Id { get; set; }
     [EmailAddress]
     public string Email { get; set; }
-
     public string Name { get; set; }
     public string? LastName { get; set; }
 

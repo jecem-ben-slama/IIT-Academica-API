@@ -1,18 +1,18 @@
-﻿// Repositories/ITeacherSubjectRepository.cs
+﻿// Repositories/ISubjectRepository.cs
 using IIT_Academica_API.Entities;
 
 public interface ISubjectRepository
 {
-    // --- TeacherSubject CRUD ---
-    Task<Subject> AddAsync(Subject Subject);
-    Task<Subject?> GetByIdAsync(int id);
-    Task<Subject> UpdateAsync(Subject Subject);
-    Task<bool> DeleteAsync(int id);
+    // --- Basic CRUD ---
+    Task<Subject> AddAsync(Subject Subject); // CREATE
+    Task<Subject?> GetByIdAsync(int id); // READ (Simple)
+    Task<Subject> UpdateAsync(Subject Subject); // UPDATE
+    Task<bool> DeleteAsync(int id); // DELETE
+
+    // --- Helper ---
     Task<bool> CodeExistsAsync(string registrationCode);
 
-    // 🚀 UPDATED: Includes Teacher and Enrollments for DTO mapping
+    // --- Eager Loading for DTOs ---
     Task<Subject?> GetByIdWithTeacherAndEnrollmentsAsync(int id);
-
-    // 🚀 UPDATED: Includes Teacher and Enrollments for DTO mapping
     Task<IEnumerable<Subject>> GetAllWithTeacherAndEnrollmentsAsync();
 }

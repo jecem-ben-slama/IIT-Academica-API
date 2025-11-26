@@ -20,7 +20,7 @@ public class UserController : ControllerBase
     {
         _userRepository = userRepository;
         _tokenService = tokenService;
-        _unitOfWork = unitOfWork;
+      _unitOfWork = unitOfWork;
     }
 
     [HttpPost("register")]

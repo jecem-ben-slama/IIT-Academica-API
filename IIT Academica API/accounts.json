@@ -1,0 +1,22 @@
+{
+    "users": [
+        {
+            "role": "Admin",
+            "email": "admin@iit.edu",
+            "password": "AdminSecurePassword1",
+            "token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxIiwiZW1haWwiOiJhZG1pbkBpaXQuZWR1Iiwicm9sZSI6IkFkbWluIiwibmJmIjoxNzY0MTg4NjU0LCJleHAiOjE3NjQ3OTM0NTQsImlhdCI6MTc2NDE4ODY1NCwiaXNzIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NzAwMSIsImF1ZCI6IklJVEFfQ2xpZW50In0.usFbbe9C90CAo38nBL3M2qNREu_PbKeoTGZD2YrwAtjkDo2rhu8r9QBDMwq0j6vry4lpZvi830R0CK0tfPeP1Q"
+        },
+        {
+            "role": "Teacher",
+            "email": "teacher@iit.edu",
+            "password": "Ahmed123!",
+            "token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIyIiwiZW1haWwiOiJ0ZWFjaGVyQGlpdC5lZHUiLCJyb2xlIjoiVGVhY2hlciIsIm5iZiI6MTc2NDE4ODg1NiwiZXhwIjoxNzY0NzkzNjU2LCJpYXQiOjE3NjQxODg4NTYsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjcwMDEiLCJhdWQiOiJJSVRBX0NsaWVudCJ9.swsQyYTtCyhJfY7yaRtwULKsbZ5mRIRjB6GGD69FRKzaCwccH9LKvUJ9fGTrnMxyQwrsLe8m4Fu99191YEqwGw"
+        },
+        {
+            "role": "Student",
+            "email": "aymen@iit.edu",
+            "password": "Aymen123!",
+            "token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIzIiwiZW1haWwiOiJzdHVkZW50QGlpdC5lZHUiLCJyb2xlIjoiU3R1ZGVudCIsIm5iZiI6MTc2NDE4OTA4NCwiZXhwIjoxNzY0NzkzODg0LCJpYXQiOjE3NjQxODkwODQsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjcwMDEiLCJhdWQiOiJJSVRBX0NsaWVudCJ9.KuutAlsAMCq0usN65stWHjJ95fby2Pu6G_YMeai0kkxQGQ71YSkmuetFqWIe2HeB51WO7AptYWlvjLgFmuGtow"
+        }
+    ]
+}

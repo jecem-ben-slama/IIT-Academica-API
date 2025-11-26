@@ -3,17 +3,13 @@ using System.ComponentModel.DataAnnotations;
 
 public class UpdateSubjectDTO
 {
-    // ID is required to identify the entity being updated
-    [Required]
+    [Required(ErrorMessage ="Subject Id Is Required")]
+    [Range(1, int.MaxValue,ErrorMessage ="Subject Id must be positive number")]
     public int Id { get; set; }
 
-    // SubjectName is typically updatable
-    [Required(ErrorMessage = "Subject Name is required.")]
-    [StringLength(100, ErrorMessage = "Subject Name cannot exceed 100 characters.")]
+    [StringLength(100,MinimumLength =10, ErrorMessage = "Subject Name cannot exceed 100 characters.")]
     public string SubjectName { get; set; }
 
-    // Teacher assignment can be changed
-    [Required(ErrorMessage = "Teacher ID is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "Teacher ID must be a valid positive number.")]
     public int TeacherId { get; set; }
 }
