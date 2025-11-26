@@ -2,6 +2,7 @@
 using IIT_Academica_API.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -160,5 +161,32 @@ public class SubjectsController : ControllerBase
 
         // Return 204 No Content for successful deletion
         return NoContent();
+    }
+    [HttpGet("mySections")]
+    [Authorize(Roles = "Teacher")] // Secured for the Teacher role
+    public async Task<ActionResult<IEnumerable<SubjectDTO>>> GetSubjectsByTeacher()
+    {
+        // 1. Get Teacher ID from JWT claims
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int teacherId))
+        {
+            return Unauthorized("Teacher identity could not be retrieved from the token.");
+        }
+
+        // 2. Retrieve entities assigned to this teacher, including enrollments
+        var entities = await Repository.GetSubjectsByTeacherIdWithEnrollmentsAsync(teacherId);
+
+        // 3. Map Entity List to DTO List
+        var dtos = entities.Select(e => new SubjectDTO
+        {
+            Id = e.Id,
+            RegistrationCode = e.RegistrationCode,
+            SubjectName = e.Title,
+            TeacherId = e.TeacherId,
+            TeacherFullName = e.Teacher?.Name + " " + e.Teacher?.LastName,
+            // Calculate Enrollment Count from the loaded collection
+            EnrollmentCount = e.Enrollments?.Count ?? 0
+        }).ToList();
+
+        return Ok(dtos);
     }
 }

@@ -47,6 +47,15 @@ public class SubjectRepository : ISubjectRepository
             .Include(ts => ts.Enrollments) // <--- ADDED: Load Enrollments
             .ToListAsync();
     }
+    public async Task<IEnumerable<Subject>> GetSubjectsByTeacherIdWithEnrollmentsAsync(int teacherId)
+    {
+        return await _context.Subjects
+            .Where(s => s.TeacherId == teacherId) // Filter by the provided TeacherId
+            .Include(s => s.Teacher)              // Load the Teacher details
+            .Include(s => s.Enrollments)          // Load the Enrollments collection
+            .AsNoTracking()
+            .ToListAsync();
+    }
 
     // ... UPDATE, DELETE methods (No change) ...
     public async Task<Subject> UpdateAsync(Subject Subject)

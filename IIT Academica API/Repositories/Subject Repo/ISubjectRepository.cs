@@ -15,4 +15,5 @@ public interface ISubjectRepository
     // --- Eager Loading for DTOs ---
     Task<Subject?> GetByIdWithTeacherAndEnrollmentsAsync(int id);
     Task<IEnumerable<Subject>> GetAllWithTeacherAndEnrollmentsAsync();
+    Task<IEnumerable<Subject>> GetSubjectsByTeacherIdWithEnrollmentsAsync(int teacherId);
 }

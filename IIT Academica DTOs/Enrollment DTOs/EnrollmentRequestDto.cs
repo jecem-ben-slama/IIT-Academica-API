@@ -9,9 +9,11 @@ namespace IIT_Academica_DTOs.Enrollment_DTOs
 {
     public class EnrollmentRequestDto
     {
-     [Required(ErrorMessage = "The registration code is required for enrollment.")]
-     [StringLength(10, MinimumLength = 6)]
+        [Required(ErrorMessage = "Subject ID is required.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Subject ID must be a valid positive number.")]
+        public int SubjectId { get; set; } // 🚀 NEW FIELD
 
+        [Required(ErrorMessage = "Registration Code is required.")]
         public string RegistrationCode { get; set; }
     }
 }
