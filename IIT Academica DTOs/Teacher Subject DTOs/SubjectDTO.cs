@@ -2,7 +2,7 @@
 
 using System.ComponentModel.DataAnnotations;
 
-public class TeacherSubjectDto
+public class SubjectDTO
 {
     public int Id { get; set; }
 
@@ -16,4 +16,5 @@ public class TeacherSubjectDto
     public int TeacherId { get; set; }
     public string TeacherFullName { get; set; }
     // ... potentially other properties from the Teacher entity
+    public int EnrollmentCount { get; set; } // <--- Added this property
 }

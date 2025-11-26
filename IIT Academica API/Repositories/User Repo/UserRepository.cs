@@ -83,11 +83,11 @@ public class UserRepository : IUserRepository
         return user?.Id;
     }
 
-    public async Task<IEnumerable<ApplicationUser>> GetStudentsInTeacherSubjectAsync(int teacherSubjectId)
+    public async Task<IEnumerable<ApplicationUser>> GetStudentsInTeacherSubjectAsync(int SubjectId)
     {
         var students = await _context.Enrollments
              // FIX: Filter by the new foreign key
-             .Where(e => e.TeacherSubjectId == teacherSubjectId)
+             .Where(e => e.SubjectId == SubjectId)
              .Select(e => e.Student)
              .Distinct()
              .ToListAsync();

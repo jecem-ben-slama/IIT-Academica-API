@@ -1,5 +1,5 @@
 ﻿// DTOs/TeacherSubjectResponse.cs
-public class TeacherSubjectResponse
+public class SubjectResponse
 {
     public int Id { get; set; }
     public string Title { get; set; }

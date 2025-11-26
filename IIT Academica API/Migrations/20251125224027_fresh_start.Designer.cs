@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IIT_Academica_API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251125224027_fresh_start")]
+    partial class fresh_start
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -116,14 +119,14 @@ namespace IIT_Academica_API.Migrations
                     b.Property<int?>("StudentId")
                         .HasColumnType("int");
 
-                    b.Property<int>("SubjectId")
+                    b.Property<int>("TeacherSubjectId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("StudentId");
 
-                    b.HasIndex("SubjectId");
+                    b.HasIndex("TeacherSubjectId");
 
                     b.ToTable("AttendanceRecords");
                 });
@@ -143,7 +146,7 @@ namespace IIT_Academica_API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("SubjectId")
+                    b.Property<int>("TeacherSubjectId")
                         .HasColumnType("int");
 
                     b.Property<string>("Title")
@@ -152,7 +155,7 @@ namespace IIT_Academica_API.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SubjectId");
+                    b.HasIndex("TeacherSubjectId");
 
                     b.ToTable("CourseMaterials");
                 });
@@ -175,19 +178,19 @@ namespace IIT_Academica_API.Migrations
                     b.Property<int>("StudentId")
                         .HasColumnType("int");
 
-                    b.Property<int>("SubjectId")
+                    b.Property<int>("TeacherSubjectId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("StudentId");
 
-                    b.HasIndex("SubjectId");
+                    b.HasIndex("TeacherSubjectId");
 
                     b.ToTable("Enrollments");
                 });
 
-            modelBuilder.Entity("IIT_Academica_API.Entities.Subject", b =>
+            modelBuilder.Entity("IIT_Academica_API.Entities.TeacherSubject", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -213,7 +216,7 @@ namespace IIT_Academica_API.Migrations
 
                     b.HasIndex("TeacherId");
 
-                    b.ToTable("Subjects");
+                    b.ToTable("TeacherSubjects");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
@@ -394,26 +397,26 @@ namespace IIT_Academica_API.Migrations
                         .WithMany("AttendanceRecords")
                         .HasForeignKey("StudentId");
 
-                    b.HasOne("IIT_Academica_API.Entities.Subject", "Subject")
+                    b.HasOne("IIT_Academica_API.Entities.TeacherSubject", "TeacherSubject")
                         .WithMany("AttendanceSessions")
-                        .HasForeignKey("SubjectId")
+                        .HasForeignKey("TeacherSubjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Student");
 
-                    b.Navigation("Subject");
+                    b.Navigation("TeacherSubject");
                 });
 
             modelBuilder.Entity("IIT_Academica_API.Entities.CourseMaterial", b =>
                 {
-                    b.HasOne("IIT_Academica_API.Entities.Subject", "Subject")
+                    b.HasOne("IIT_Academica_API.Entities.TeacherSubject", "TeacherSubject")
                         .WithMany("CourseMaterials")
-                        .HasForeignKey("SubjectId")
+                        .HasForeignKey("TeacherSubjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Subject");
+                    b.Navigation("TeacherSubject");
                 });
 
             modelBuilder.Entity("IIT_Academica_API.Entities.Enrollment", b =>
@@ -424,21 +427,21 @@ namespace IIT_Academica_API.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("IIT_Academica_API.Entities.Subject", "Subject")
+                    b.HasOne("IIT_Academica_API.Entities.TeacherSubject", "TeacherSubject")
                         .WithMany("Enrollments")
-                        .HasForeignKey("SubjectId")
+                        .HasForeignKey("TeacherSubjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Student");
 
-                    b.Navigation("Subject");
+                    b.Navigation("TeacherSubject");
                 });
 
-            modelBuilder.Entity("IIT_Academica_API.Entities.Subject", b =>
+            modelBuilder.Entity("IIT_Academica_API.Entities.TeacherSubject", b =>
                 {
                     b.HasOne("ApplicationUser", "Teacher")
-                        .WithMany("TaughtSubjects")
+                        .WithMany("TaughtTeacherSubjects")
                         .HasForeignKey("TeacherId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -512,10 +515,10 @@ namespace IIT_Academica_API.Migrations
 
                     b.Navigation("Enrollments");
 
-                    b.Navigation("TaughtSubjects");
+                    b.Navigation("TaughtTeacherSubjects");
                 });
 
-            modelBuilder.Entity("IIT_Academica_API.Entities.Subject", b =>
+            modelBuilder.Entity("IIT_Academica_API.Entities.TeacherSubject", b =>
                 {
                     b.Navigation("AttendanceSessions");
 

@@ -1,7 +1,7 @@
 ﻿// Models/Dtos/UpdateTeacherSubjectDto.cs
 using System.ComponentModel.DataAnnotations;
 
-public class UpdateTeacherSubjectDto
+public class UpdateSubjectDTO
 {
     // ID is required to identify the entity being updated
     [Required]

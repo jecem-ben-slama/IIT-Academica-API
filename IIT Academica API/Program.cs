@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
-using IIT_Academica_API.Entities; // Assuming your Entities namespace is included
+using IIT_Academica_API.Entities;
 // Add using statements for your services/repositories if not in the same file
 // using YourNamespace.Services; 
 // using YourNamespace.Repositories; 
@@ -34,7 +34,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>(options =>
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddScoped<ITeacherSubjectRepository, TeacherSubjectRepository>();
+builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
+builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 
 // JWT Bearer Configuration (No change needed here)
 builder.Services.AddAuthentication(options =>
@@ -93,6 +94,7 @@ using (var scope = app.Services.CreateScope())
         {
             Email = adminEmail,
             // Set the new properties instead of the old 'FullName'
+            UserName = adminEmail,
             Name = "System",
             LastName = "Admin"
         }; var password = builder.Configuration["AdminPassword"];

@@ -7,7 +7,8 @@ public class UnitOfWork : IUnitOfWork
     private readonly UserManager<ApplicationUser> _userManager;
 
     private IUserRepository _userRepository;
-    private ITeacherSubjectRepository _teacherSubjectRepository;
+    private ISubjectRepository _subjectRepository;
+    private IEnrollmentRepository _enrollmentRepository;
 
     public UnitOfWork(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
     {
@@ -17,9 +18,10 @@ public class UnitOfWork : IUnitOfWork
 
     public IUserRepository Users =>
         _userRepository ??= new UserRepository(_context, _userManager);
-    public ITeacherSubjectRepository TeacherSubjects =>
-        _teacherSubjectRepository ??= new TeacherSubjectRepository(_context);
-
+    public ISubjectRepository Subjects =>
+        _subjectRepository ??= new SubjectRepository(_context);
+    public IEnrollmentRepository Enrollments =>
+        _enrollmentRepository ??= new EnrollmentRepository(_context);
 
     public async Task<int> CompleteAsync()
     {

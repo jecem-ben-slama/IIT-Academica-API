@@ -7,8 +7,8 @@ namespace IIT_Academica_API.Entities
         public int Id { get; set; }
 
         // FIX: Foreign Key points to the class section instance
-        public int TeacherSubjectId { get; set; }
-        public TeacherSubject TeacherSubject { get; set; }
+        public int SubjectId { get; set; }
+        public Subject Subject { get; set; }
 
         // Links to the student being marked
         public int? StudentId { get; set; }

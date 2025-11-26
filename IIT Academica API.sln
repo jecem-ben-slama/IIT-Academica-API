@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36623.8 d17.14
+VisualStudioVersion = 17.14.36623.8
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIT Academica API", "IIT Academica API\IIT Academica API.csproj", "{187C95CE-8CAF-4A78-B429-741FC57C7D09}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIT Academica DTOs", "IIT Academica DTOs\IIT Academica DTOs.csproj", "{38E85E1F-5739-4000-80DD-029B60A01D8C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{187C95CE-8CAF-4A78-B429-741FC57C7D09}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{187C95CE-8CAF-4A78-B429-741FC57C7D09}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{187C95CE-8CAF-4A78-B429-741FC57C7D09}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38E85E1F-5739-4000-80DD-029B60A01D8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38E85E1F-5739-4000-80DD-029B60A01D8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38E85E1F-5739-4000-80DD-029B60A01D8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38E85E1F-5739-4000-80DD-029B60A01D8C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

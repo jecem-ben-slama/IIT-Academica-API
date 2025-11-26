@@ -20,7 +20,7 @@ public class ApplicationDbContext : IdentityDbContext<
     }
 
     // ADDED: The new central class instance entity
-    public DbSet<TeacherSubject> TeacherSubjects { get; set; }
+    public DbSet<Subject> Subjects { get; set; }
 
     public DbSet<CourseMaterial> CourseMaterials { get; set; }
     public DbSet<Enrollment> Enrollments { get; set; }
@@ -37,15 +37,15 @@ public class ApplicationDbContext : IdentityDbContext<
         // -------------------------------------------------------------
 
         // Configure the one-to-many relationship between ApplicationUser (Teacher) and TeacherSubject
-        modelBuilder.Entity<TeacherSubject>()
+        modelBuilder.Entity<Subject>()
             .HasOne(ts => ts.Teacher) // The TeacherSubject has one Teacher
                                       // NOTE: You must ensure you have added 'public ICollection<TeacherSubject> TaughtTeacherSubjects { get; set; }' to ApplicationUser.cs
-            .WithMany(u => u.TaughtTeacherSubjects)
+            .WithMany(u => u.TaughtSubjects)
             .HasForeignKey(ts => ts.TeacherId) // TeacherId is now int
             .OnDelete(DeleteBehavior.Restrict);
 
         // Ensure the RegistrationCode is unique for enrollment
-        modelBuilder.Entity<TeacherSubject>()
+        modelBuilder.Entity<Subject>()
             .HasIndex(ts => ts.RegistrationCode)
             .IsUnique();
 
@@ -55,23 +55,23 @@ public class ApplicationDbContext : IdentityDbContext<
 
         // CourseMaterial now links to TeacherSubject
         modelBuilder.Entity<CourseMaterial>()
-            .HasOne(cm => cm.TeacherSubject)
+            .HasOne(cm => cm.Subject)
             .WithMany(ts => ts.CourseMaterials)
-            .HasForeignKey(cm => cm.TeacherSubjectId)
+            .HasForeignKey(cm => cm.SubjectId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Enrollment now links to TeacherSubject
         modelBuilder.Entity<Enrollment>()
-            .HasOne(e => e.TeacherSubject)
+            .HasOne(e => e.Subject)
             .WithMany(ts => ts.Enrollments)
-            .HasForeignKey(e => e.TeacherSubjectId)
+            .HasForeignKey(e => e.SubjectId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // AttendanceRecord now links to TeacherSubject
         modelBuilder.Entity<AttendanceRecord>()
-            .HasOne(ar => ar.TeacherSubject)
+            .HasOne(ar => ar.Subject)
             .WithMany(ts => ts.AttendanceSessions)
-            .HasForeignKey(ar => ar.TeacherSubjectId)
+            .HasForeignKey(ar => ar.SubjectId)
             .OnDelete(DeleteBehavior.Cascade);
 
 

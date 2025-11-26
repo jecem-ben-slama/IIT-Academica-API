@@ -29,7 +29,7 @@ public class UserController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var user = new ApplicationUser { UserName = model.Name, Name = model.Name, LastName =model.LastName,Email = model.Email };
+        var user = new ApplicationUser { UserName = model.Email, Name = model.Name, LastName =model.LastName,Email = model.Email };
 
         var result = await _userRepository.RegisterAndAssignRoleAsync(user, model.Password, model.Role);
 

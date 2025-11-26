@@ -1,7 +1,7 @@
 ﻿// Models/Dtos/CreateTeacherSubjectDto.cs
 using System.ComponentModel.DataAnnotations;
 
-public class CreateTeacherSubjectDto
+public class CreateSubjectDto
 {
     [Required(ErrorMessage = "Registration Code is required.")]
     [StringLength(50, ErrorMessage = "Registration Code cannot exceed 50 characters.")]

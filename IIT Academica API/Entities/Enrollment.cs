@@ -10,8 +10,8 @@ namespace IIT_Academica_API.Entities
         public ApplicationUser Student { get; set; }
 
         // Reworked: Foreign Key points to the TeacherSubject
-        public int TeacherSubjectId { get; set; }
-        public TeacherSubject TeacherSubject { get; set; }
+        public int SubjectId { get; set; }
+        public Subject Subject { get; set; }
 
         public DateTime EnrollmentDate { get; set; }
         public string Status { get; set; }

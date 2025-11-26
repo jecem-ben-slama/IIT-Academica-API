@@ -5,7 +5,7 @@ namespace IIT_Academica_API.Entities
 {
     // Reworked: This is the core entity representing a unique class section 
     // (e.g., "Intro to C++ - Fall 2025")
-    public class TeacherSubject
+    public class Subject
     {
         public int Id { get; set; }
 

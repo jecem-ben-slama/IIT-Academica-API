@@ -10,8 +10,8 @@ namespace IIT_Academica_API.Entities
         public DateTime AccessUntilDate { get; set; }
 
         // Reworked: Foreign Key points to the TeacherSubject
-        public int TeacherSubjectId { get; set; }
+        public int SubjectId { get; set; }
 
-        public TeacherSubject TeacherSubject { get; set; }
+        public Subject Subject { get; set; }
     }
 }

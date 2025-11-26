@@ -1,8 +1,10 @@
-﻿public interface IUnitOfWork : IDisposable
+﻿
+public interface IUnitOfWork : IDisposable
 {
     IUserRepository Users { get; }
 
-    ITeacherSubjectRepository TeacherSubjects { get; }
+    ISubjectRepository Subjects { get; }
+    IEnrollmentRepository Enrollments { get; }
 
     Task<int> CompleteAsync();
 }
