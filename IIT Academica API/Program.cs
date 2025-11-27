@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using IIT_Academica_API.Entities;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using System.Security.Claims;
-using IIT_Academica_API.Entities;
+using System.Text;
 // Add using statements for your services/repositories if not in the same file
 // using YourNamespace.Services; 
 // using YourNamespace.Repositories; 
@@ -36,6 +36,8 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
+builder.Services.AddScoped<ICourseMaterialRepository, CourseMaterialRepository>();
+builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
 // JWT Bearer Configuration (No change needed here)
 builder.Services.AddAuthentication(options =>

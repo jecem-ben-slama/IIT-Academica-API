@@ -27,4 +27,8 @@
     <ProjectReference Include="..\IIT Academica DTOs\IIT Academica DTOs.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Uploads\" />
+  </ItemGroup>
+
 </Project>

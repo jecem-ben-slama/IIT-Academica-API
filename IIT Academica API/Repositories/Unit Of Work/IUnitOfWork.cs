@@ -5,6 +5,7 @@ public interface IUnitOfWork : IDisposable
 
     ISubjectRepository Subjects { get; }
     IEnrollmentRepository Enrollments { get; }
+    ICourseMaterialRepository courseMaterials { get; }
 
     Task<int> CompleteAsync();
 }
