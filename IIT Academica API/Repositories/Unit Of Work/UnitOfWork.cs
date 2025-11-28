@@ -10,6 +10,7 @@ public class UnitOfWork : IUnitOfWork
     private ISubjectRepository _subjectRepository;
     private IEnrollmentRepository _enrollmentRepository;
     private ICourseMaterialRepository _courseMaterialRepository;
+    private INotificationRepository _notificationRepository;
 
     public UnitOfWork(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
     {
@@ -25,6 +26,8 @@ public class UnitOfWork : IUnitOfWork
         _enrollmentRepository ??= new EnrollmentRepository(_context);
     public ICourseMaterialRepository  courseMaterials=>
         _courseMaterialRepository ??= new CourseMaterialRepository(_context);
+    public INotificationRepository Notifications=>
+        _notificationRepository??=new NotificationRepository(_context);
 
     public async Task<int> CompleteAsync()
     {
