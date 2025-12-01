@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿namespace IIT_Academica_DTOs;
+using System.ComponentModel.DataAnnotations;
 
 public class LoginDto
 {

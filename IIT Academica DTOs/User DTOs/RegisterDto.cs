@@ -3,8 +3,7 @@
 public class RegisterDto
 {
     [Required]
-    [EmailAddress]
-    [StringLength(50,MinimumLength =20,ErrorMessage ="Email Address Length problem")]
+    [RegularExpression(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", ErrorMessage = "Invalid email format.")]
     public string Email { get; set; }
 
     [Required]

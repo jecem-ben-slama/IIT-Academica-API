@@ -1,0 +1,91 @@
+﻿@page "/"
+@using IIT_Academica_DTOs
+@inject AuthService AuthService
+@inject NavigationManager NavigationManager
+
+<div class="login-layout">
+ 
+
+    <!-- Right form area -->
+    <div class="login-right">
+        <div class="login-card">
+
+            <p class="text-muted small-title">Please enter your details</p>
+            <h2 class="welcome-title">Welcome back</h2>
+
+            <EditForm Model="@loginDto" OnValidSubmit="HandleLogin">
+                <DataAnnotationsValidator />
+
+                <div class="form-group mt-4">
+                    <label>Email address</label>
+                    <InputText class="form-control modern-input" @bind-Value="loginDto.Email" />
+                </div>
+
+                <div class="form-group mt-3">
+                    <label>Password</label>
+                    <InputText type="password" class="form-control modern-input" @bind-Value="loginDto.Password" />
+                </div>
+
+               
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger mt-3 text-center">
+                        @errorMessage
+                    </div>
+                }
+
+                <button type="submit" class="btn primary-btn w-100 mt-4" disabled="@isBusy">
+                    @if (isBusy)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    Login
+                </button>
+
+               
+             
+
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginDto loginDto = new();
+    private string? errorMessage;
+    private bool isBusy = false;
+    private bool rememberMe = false;
+
+    private async Task HandleLogin()
+    {
+        errorMessage = null;
+        isBusy = true;
+
+        try
+        {
+            var auth = await AuthService.Login(loginDto.Email, loginDto.Password);
+            if (auth.IsSuccess)
+            {
+                NavigationManager.NavigateTo(
+                    auth.Role switch {
+                        "Student" => "/student",
+                        "Admin" => "/admin",
+                        "Teacher" => "/teacher",
+                        _ => "/dashboard"
+                    },
+                    forceLoad: true
+                );
+            }
+            else
+                errorMessage = auth.Errors?.FirstOrDefault() ?? auth.Message;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+}

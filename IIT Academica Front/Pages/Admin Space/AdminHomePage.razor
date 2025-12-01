@@ -1,0 +1,102 @@
+@page "/admin"
+@inject NavigationManager NavigationManager 
+@inject AuthService AuthService
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@attribute [Authorize(Roles = "Admin")]
+
+@* Note: For the Bootstrap icons (bi bi-...) to display, ensure you have the Bootstrap Icons CDN link 
+    in your project's index.html or _Layout.cshtml file. *@
+
+<div class="container-fluid">
+    <div class="row min-vh-100">
+        
+        @* === Sidebar Navigation (Small screens collapse to col-3, large to col-2) === *@
+        <div class="col-3 col-md-3 col-lg-2 p-0 sidebar shadow-sm">
+            <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-3 text-white min-vh-100">
+                
+                <div class="w-100 text-center mb-4">
+                    <span class="fs-5 d-none d-sm-inline fw-bold text-uppercase">Admin Portal</span>
+                </div>
+                
+                <ul class="nav nav-pills flex-column mb-auto w-100" id="menu">
+                    <li class="nav-item w-100">
+                        <NavLink class="nav-link align-middle px-3 text-white" href="/admin" Match="NavLinkMatch.All">
+                            <i class="bi bi-speedometer2 me-2"></i> <span class="d-none d-sm-inline">Dashboard</span>
+                        </NavLink>
+                    </li>
+                    <li class="w-100">
+                        <NavLink class="nav-link px-3 align-middle text-white" href="/admin/users">
+                            <i class="bi bi-people-fill me-2"></i> <span class="d-none d-sm-inline">Manage Users</span>
+                        </NavLink>
+                    </li>
+                    <li class="w-100">
+                        <NavLink class="nav-link px-3 align-middle text-white" href="/admin/courses">
+                            <i class="bi bi-book-fill me-2"></i> <span class="d-none d-sm-inline">Courses</span>
+                        </NavLink>
+                    </li>
+                    <li class="w-100">
+                        <NavLink class="nav-link px-3 align-middle text-white" href="/admin/reports">
+                            <i class="bi bi-graph-up me-2"></i> <span class="d-none d-sm-inline">Reports</span>
+                        </NavLink>
+                    </li>
+                </ul>
+                
+                <hr class="w-100">
+                
+                @* Logout Button *@
+                <div class="pb-3 w-100">
+                    <button class="btn btn-danger w-100" @onclick="HandleLogout">
+                        <i class="bi bi-box-arrow-right me-1"></i> Log Out
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        @* === Main Content Area === *@
+        <div class="col-9 col-md-9 col-lg-10 py-4 px-5">
+            <h1 class="mb-4">Admin Dashboard Overview</h1>
+            <p class="lead text-muted">A quick look at the system status.</p>
+            
+            @* Example Info Cards *@
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary">Total Students</h5>
+                            <p class="card-text display-4">1,245</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title text-success">Active Teachers</h5>
+                            <p class="card-text display-4">42</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">Pending Registrations</h5>
+                            <p class="card-text display-4">8</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+@code {
+    
+    private async Task HandleLogout()
+    {
+        await AuthService.Logout();
+        // Redirect and force full reload to reset authentication state
+        NavigationManager.NavigateTo("/", true,replace:true);
+    }
+}

@@ -6,25 +6,39 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
-// Add using statements for your services/repositories if not in the same file
-// using YourNamespace.Services; 
-// using YourNamespace.Repositories; 
-
+using System.Net.Http; 
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Define a policy name for clarity and consistency
+var MyAllowDevelopmentOrigins = "_myAllowDevelopmentOrigins"; 
+
+// 🛑 CORS FIX 1: Add CORS services with a simple development-friendly policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowDevelopmentOrigins,
+        policy =>
+        {
+            // Allow requests from *any* origin on any port during development
+            policy.AllowAnyOrigin() 
+                  .AllowAnyHeader()  // Essential for allowing Authorization header (JWT)
+                  .AllowAnyMethod(); // Essential for allowing POST/GET/DELETE requests
+        });
+});
+// 🛑 Note: The previous definition was: options.AddPolicy("AllowSpecificOrigin", policy=>policy.AllowAnyOrigin().AllowAnyOrigin().AllowAnyHeader().AllowAnyHeader());
+// This was redundant and the name "AllowAll" was not defined in the services.
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString));
 
-// FIX 1: Use IdentityUser<int> (ApplicationUser already inherits from it)
-// FIX 2: Explicitly specify IdentityRole<int> for the Role type
+// FIX 1 & 2: Explicitly specify IdentityRole<int> for the Role type
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>(options =>
 {
-    options.Password.RequireDigit = true;
-    options.Password.RequiredLength = 6;
-    options.Password.RequireNonAlphanumeric = false;
-    options.SignIn.RequireConfirmedAccount = false;
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.SignIn.RequireConfirmedAccount = false;
 })
 // FIX 3: AddEntityFrameworkStores must also use the explicit Role type
 .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -44,22 +58,22 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 // JWT Bearer Configuration (No change needed here)
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
 
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-    };
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
 });
 
 builder.Services.AddControllers();
@@ -69,32 +83,29 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(builder.Environment.ContentRootPath, "Uploads")),
-    RequestPath = "/Uploads"
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "Uploads")),
+    RequestPath = "/Uploads"
 });
 
 // Database Seeding and Role Initialization
 using (var scope = app.Services.CreateScope())
 {
-    // FIX 4: Use RoleManager<IdentityRole<int>> (Explicit int key)
+    // ... Database seeding logic (unchanged)
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-    // Ensures the database exists and applies the migration
     context.Database.Migrate();
 
     var roles = new[] { "Admin", "Teacher", "Student" };
     foreach (var role in roles)
     {
-        // FIX 5: Use IdentityRole<int>(role) when creating the new role object
         if (!await roleManager.RoleExistsAsync(role))
         {
             await roleManager.CreateAsync(new IdentityRole<int>(role));
         }
     }
 
-    // FIX 6: UserManager<ApplicationUser> is fine, as ApplicationUser is IdentityUser<int>
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     var adminEmail = "admin@iit.edu";
 
@@ -103,7 +114,6 @@ using (var scope = app.Services.CreateScope())
         var adminUser = new ApplicationUser
         {
             Email = adminEmail,
-            // Set the new properties instead of the old 'FullName'
             UserName = adminEmail,
             Name = "System",
             LastName = "Admin"
@@ -129,14 +139,18 @@ using (var scope = app.Services.CreateScope())
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
 
+// 🛑 CORS FIX 2: Apply the CORS policy here, BEFORE UseAuthentication and UseAuthorization!
+app.UseCors(MyAllowDevelopmentOrigins); // Using the correctly defined policy name
+
 app.UseAuthentication();
 app.UseAuthorization();
+// app.UseCors("AllowAll"); // 🛑 REMOVE THIS INCORRECT LINE
 
 app.MapControllers();
 

@@ -1,0 +1,25 @@
+@page "/student"
+@inject NavigationManager NavigationManager 
+@inject AuthService AuthService
+
+<h3>Admin Home Page</h3>
+<hr/>
+
+<p>Welcome to the student area.</p>
+
+<button class="btn btn-danger" @onclick="HandleLogout">
+    Log Out
+</button>
+
+@code {
+    
+    // Method to handle the logout process
+    private async Task HandleLogout()
+    {
+        // 1. Call the AuthService to clear the token and update authentication state
+        await AuthService.Logout();
+
+      
+        NavigationManager.NavigateTo("/", true,replace:true);
+    }
+}

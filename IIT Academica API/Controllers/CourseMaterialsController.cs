@@ -1,13 +1,10 @@
 ﻿// Controllers/CourseMaterialsController.cs
 using IIT_Academica_API.Entities;
-using IIT_Academica_API.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 [ApiController]
 [Route("api/[controller]")]

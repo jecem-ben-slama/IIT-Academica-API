@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using IIT_Academica_DTOs;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -20,7 +21,7 @@ public class UserController : ControllerBase
     {
         _userRepository = userRepository;
         _tokenService = tokenService;
-      _unitOfWork = unitOfWork;
+        _unitOfWork = unitOfWork;
     }
 
     [HttpPost("register")]
@@ -29,7 +30,7 @@ public class UserController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var user = new ApplicationUser { UserName = model.Email, Name = model.Name, LastName =model.LastName,Email = model.Email };
+        var user = new ApplicationUser { UserName = model.Email, Name = model.Name, LastName = model.LastName, Email = model.Email };
 
         var result = await _userRepository.RegisterAndAssignRoleAsync(user, model.Password, model.Role);
 
@@ -59,7 +60,7 @@ public class UserController : ControllerBase
         {
             Message = "Registration failed",
             IsSuccess = false,
-            Errors = errors 
+            Errors = errors
         });
     }
 
@@ -70,7 +71,7 @@ public class UserController : ControllerBase
 
         if (user != null)
         {
-           
+
             var roles = await _userRepository.GetUserRolesAsync(user);
             var token = _tokenService.CreateToken(user, roles);
 
@@ -98,7 +99,7 @@ public class UserController : ControllerBase
         foreach (var user in users)
         {
             var roles = await _userRepository.GetUserRolesAsync(user);
-            userDtos.Add(new UserReadDto { Id = user.Id, Email = user.Email!, Name = user.Name!,LastName=user.LastName!, Role = roles.FirstOrDefault()! });
+            userDtos.Add(new UserReadDto { Id = user.Id, Email = user.Email!, Name = user.Name!, LastName = user.LastName!, Role = roles.FirstOrDefault()! });
         }
 
         return Ok(userDtos);
