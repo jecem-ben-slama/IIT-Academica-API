@@ -1,23 +1,65 @@
-/* --- Admin Layout Structure --- */
+/** Admin navbar */
+.sidebar
+{
+    /* Background and shadow for the sidebar */
+    background-color: #343a40 !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
 
-/* Fixed width for the sidebar, sitting on the left */
+/* Ensure NavLinks are visible on the dark background */
+.sidebar .nav-link
+{
+    color: #ced4da !important;
+    padding: 0.75rem 1rem;
+    transition: background-color 0.3s, color 0.3s;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Hover and Active styles for NavLinks */
+.sidebar .nav-link:hover
+{
+    background-color: #495057;
+    color: #fff !important;
+}
+
+.sidebar .nav-link.active
+{
+    background-color: #1b6ec2 !important;
+    /* Use your primary color */
+    color: white !important;
+}
+
+/* Ensures the container takes up the full viewport height */
+.min-vh-100
+{
+    min-height: 100vh;
+}
+
+
+/* --- New Layout Structure Classes --- */
+
+/* Fixed width for the sidebar */
 .sidebar-wrapper
 {
     width: 250px;
+    /* Adjust width as preferred */
     min-height: 100vh;
     background-color: #343a40;
     /* Dark background */
     flex-shrink: 0;
+    /* Prevent it from shrinking */
 }
 
-/* Ensure the content wrapper takes the remaining horizontal space and allows scrolling */
+/* Ensure the content wrapper takes the remaining space */
 #page-content-wrapper
 {
     min-width: 0;
+    /* Allows content to shrink */
     width: 100%;
 }
 
-/* --- Sidebar Styling --- */
+/* --- Existing Sidebar & NavLink Styles --- */
 .sidebar-wrapper .nav-link
 {
     color: #ced4da !important;
@@ -39,7 +81,13 @@
     color: white !important;
 }
 
-/* --- SKELETON BASE STYLES --- */
+/* The min-vh-100 class is still useful on the inner element */
+.min-vh-100
+{
+    min-height: 100vh;
+}
+
+/** --- SKELETON BASE STYLES --- */
 .skeleton-line
 {
     /* Base dimensions */
