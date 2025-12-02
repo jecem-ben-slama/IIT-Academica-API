@@ -22,6 +22,7 @@ namespace IIT_Academica_Front
 
             // 3. Register our Custom Services
            builder.Services.AddScoped<AuthService>();
+           builder.Services.AddScoped<UserService>();
            // builder.Services.AddScoped<SubjectService>();
           //builder.Services.AddScoped<NotificationService>(); 
           builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5030") });

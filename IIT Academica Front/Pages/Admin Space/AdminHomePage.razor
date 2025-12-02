@@ -1,102 +1,173 @@
 @page "/admin"
+@attribute [Authorize(Roles = "Admin")]
+@layout AdminLayout 
+@inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager 
 @inject AuthService AuthService
+@inject UserService UserService
 
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Components.Authorization
-@attribute [Authorize(Roles = "Admin")]
+@* --- Content that will be rendered inside the @Body of AdminLayout --- *@
 
-@* Note: For the Bootstrap icons (bi bi-...) to display, ensure you have the Bootstrap Icons CDN link 
-    in your project's index.html or _Layout.cshtml file. *@
 
-<div class="container-fluid">
-    <div class="row min-vh-100">
-        
-        @* === Sidebar Navigation (Small screens collapse to col-3, large to col-2) === *@
-        <div class="col-3 col-md-3 col-lg-2 p-0 sidebar shadow-sm">
-            <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-3 text-white min-vh-100">
-                
-                <div class="w-100 text-center mb-4">
-                    <span class="fs-5 d-none d-sm-inline fw-bold text-uppercase">Admin Portal</span>
-                </div>
-                
-                <ul class="nav nav-pills flex-column mb-auto w-100" id="menu">
-                    <li class="nav-item w-100">
-                        <NavLink class="nav-link align-middle px-3 text-white" href="/admin" Match="NavLinkMatch.All">
-                            <i class="bi bi-speedometer2 me-2"></i> <span class="d-none d-sm-inline">Dashboard</span>
-                        </NavLink>
-                    </li>
-                    <li class="w-100">
-                        <NavLink class="nav-link px-3 align-middle text-white" href="/admin/users">
-                            <i class="bi bi-people-fill me-2"></i> <span class="d-none d-sm-inline">Manage Users</span>
-                        </NavLink>
-                    </li>
-                    <li class="w-100">
-                        <NavLink class="nav-link px-3 align-middle text-white" href="/admin/courses">
-                            <i class="bi bi-book-fill me-2"></i> <span class="d-none d-sm-inline">Courses</span>
-                        </NavLink>
-                    </li>
-                    <li class="w-100">
-                        <NavLink class="nav-link px-3 align-middle text-white" href="/admin/reports">
-                            <i class="bi bi-graph-up me-2"></i> <span class="d-none d-sm-inline">Reports</span>
-                        </NavLink>
-                    </li>
-                </ul>
-                
-                <hr class="w-100">
-                
-                @* Logout Button *@
-                <div class="pb-3 w-100">
-                    <button class="btn btn-danger w-100" @onclick="HandleLogout">
-                        <i class="bi bi-box-arrow-right me-1"></i> Log Out
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        @* === Main Content Area === *@
-        <div class="col-9 col-md-9 col-lg-10 py-4 px-5">
-            <h1 class="mb-4">Admin Dashboard Overview</h1>
-            <p class="lead text-muted">A quick look at the system status.</p>
+<p class="lead text-muted">A quick look at the system status.</p>
             
-            @* Example Info Cards *@
-            <div class="row">
-                <div class="col-lg-4 mb-4">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title text-primary">Total Students</h5>
-                            <p class="card-text display-4">1,245</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 mb-4">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title text-success">Active Teachers</h5>
-                            <p class="card-text display-4">42</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 mb-4">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title text-warning">Pending Registrations</h5>
-                            <p class="card-text display-4">8</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-        </div>
+<hr class="mt-4 mb-4" />
+
+<h2>📚 Student List</h2>
+
+@* === New Filtering and Search Controls === *@
+<div class="row mb-4">
+    
+    <div class="col-md-3">
+        <label for="roleFilter" class="form-label">Filter by Role</label>
+        <select id="roleFilter" class="form-select" @bind="SelectedRole">
+            <option value="">All Roles</option>
+            <option value="Admin">Admin</option>
+            <option value="Student">Student</option>
+            <option value="Teacher">Teacher</option>
+           
+            @* Add other roles as needed *@
+        </select>
+    </div>
+
+    @* --- Search Bar Input --- *@
+    <div class="col-md-6">
+        <label for="searchQuery" class="form-label">Search by Name or Email</label>
+        <input id="searchQuery" class="form-control" type="text" placeholder="Enter name or email..." @bind="SearchQuery" @bind:event="oninput" />
+    </div>
+
+    @* --- Refresh Button --- *@
+    <div class="col-md-3 d-flex align-items-end">
+        <button class="btn btn-outline-primary w-100" @onclick="LoadStudentsAsync">
+             <i class="bi bi-arrow-clockwise"></i> Refresh List
+        </button>
     </div>
 </div>
+@* ========================================= *@
+            
+@if (isLoading)
+{
+    <div class="card shadow-sm mt-3">
+        <div class="card-body">
+            <h5 class="card-title skeleton-line short"></h5>
+            
+            <div class="table-responsive skeleton-table mt-4">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < 5; i++)
+                        {
+                            <tr>
+                                <td><div class="skeleton-line tiny"></div></td>
+                                <td><div class="skeleton-line medium"></div></td>
+                                <td><div class="skeleton-line long"></div></td>
+                                <td><div class="skeleton-line short"></div></td>
+                                <td><div class="skeleton-line tiny"></div></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
 
-@code {
-    
-    private async Task HandleLogout()
+else if (errorMessage != null)
+{
+    @* ... Error Alert ... *@
+}
+else if (FilteredStudents == null || !FilteredStudents.Any())
+{
+    <div class="alert alert-info mt-3">
+        No student records found based on the current filters.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover shadow-sm rounded">
+            <thead class="bg-primary text-white">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var student in FilteredStudents)
+                {
+                    <tr>
+                        <td>@student.Id</td>
+                        <td>@student.Name @student.LastName</td>
+                        <td>@student.Email</td>
+                        <td>@student.Role</td>
+                        <td>
+                            <button class="btn btn-sm btn-info me-2">View</button>
+                            <button class="btn btn-sm btn-warning">Edit</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {   
+    private List<UserReadDto>? students; 
+    private string? errorMessage;
+    private bool isLoading = true;
+    private const string ScrollKey = "AdminScrollPosition"; // Unique key for storage
+
+    private string SearchQuery { get; set; } = string.Empty;
+    private string SelectedRole { get; set; } = string.Empty;
+
+   private IEnumerable<UserReadDto> FilteredStudents => students?
+    .Where(s => 
+        // 1. Role Filter
+        (string.IsNullOrEmpty(SelectedRole) || s.Role.Equals(SelectedRole, StringComparison.OrdinalIgnoreCase)) &&
+        // 2. Search Filter (Updated to check Full Name)
+        (string.IsNullOrEmpty(SearchQuery) || 
+         // Create a combined string for name searching:
+         $"{s.Name} {s.LastName}".Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) ||
+         s.Email.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase))
+    ) ?? Enumerable.Empty<UserReadDto>();
+
+// Note: I've also switched to OrdinalIgnoreCase for better user experience.
+
+    protected override async Task OnInitializedAsync()
     {
-        await AuthService.Logout();
-        // Redirect and force full reload to reset authentication state
-        NavigationManager.NavigateTo("/", true,replace:true);
+        await LoadStudentsAsync();
+    }
+    
+    
+    private async Task LoadStudentsAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            // add awit time
+             await Task.Delay(1000); // Simulate loading delay
+            students=await UserService.GetAllUsersAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to fetch users list: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 }

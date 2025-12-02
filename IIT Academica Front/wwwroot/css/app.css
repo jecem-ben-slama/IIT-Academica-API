@@ -293,3 +293,124 @@ code
 {
     min-height: 100vh;
 }
+
+
+/* --- New Layout Structure Classes --- */
+
+/* Fixed width for the sidebar */
+.sidebar-wrapper
+{
+    width: 250px;
+    /* Adjust width as preferred */
+    min-height: 100vh;
+    background-color: #343a40;
+    /* Dark background */
+    flex-shrink: 0;
+    /* Prevent it from shrinking */
+}
+
+/* Ensure the content wrapper takes the remaining space */
+#page-content-wrapper
+{
+    min-width: 0;
+    /* Allows content to shrink */
+    width: 100%;
+}
+
+/* --- Existing Sidebar & NavLink Styles --- */
+.sidebar-wrapper .nav-link
+{
+    color: #ced4da !important;
+    padding: 0.75rem 1rem;
+    transition: background-color 0.3s, color 0.3s;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.sidebar-wrapper .nav-link:hover
+{
+    background-color: #495057;
+    color: #fff !important;
+}
+
+.sidebar-wrapper .nav-link.active
+{
+    background-color: #1b6ec2 !important;
+    color: white !important;
+}
+
+/* The min-vh-100 class is still useful on the inner element */
+.min-vh-100
+{
+    min-height: 100vh;
+}
+
+
+
+
+
+
+
+/* --- SKELETON BASE STYLES --- */
+.skeleton-line
+{
+    /* Base dimensions */
+    background-color: #e2e5e7;
+    /* Light gray color */
+    height: 1em;
+    /* Standard line height */
+    border-radius: 4px;
+    /* Rounded corners */
+    margin-bottom: 0.5em;
+    opacity: 0.7;
+
+    /* Animation */
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* Adjust line lengths */
+.skeleton-line.tiny
+{
+    width: 25%;
+}
+
+.skeleton-line.short
+{
+    width: 40%;
+}
+
+.skeleton-line.medium
+{
+    width: 65%;
+}
+
+.skeleton-line.long
+{
+    width: 90%;
+}
+
+/* Ensure the table body rows maintain height */
+.skeleton-table tbody tr
+{
+    height: 3.5rem;
+    /* Ensure rows don't collapse when content is just skeleton-lines */
+}
+
+/* --- PULSE ANIMATION --- */
+@keyframes pulse
+{
+    0%
+    {
+        opacity: 0.7;
+    }
+
+    50%
+    {
+        opacity: 0.3;
+    }
+
+    100%
+    {
+        opacity: 0.7;
+    }
+}
