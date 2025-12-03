@@ -1,0 +1,268 @@
+@using Microsoft.AspNetCore.Components.Forms
+@inject UserService UserService
+@inject IJSRuntime JSRuntime
+
+<div class="modal d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header @(IsEditMode ? "bg-warning" : "bg-primary") text-white">
+                <h5 class="modal-title">@((IsEditMode ? $"✏️ Edit User ID {UserId}" : "➕ Add New User"))</h5>
+                <button type="button" class="btn-close btn-close-white" aria-label="Close"
+                        @onclick="OnClose" disabled="@IsFormDisabled"></button>
+            </div>
+
+            @if (isLoadingInitialData)
+            {
+                <div class="modal-body text-center">
+                    <p>Loading user data...</p>
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            }
+            else
+            {
+                <EditForm EditContext="editContext" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="modal-body">
+
+                        @* --- Success Message --- *@
+                        @if (!string.IsNullOrEmpty(SuccessMessage))
+                        {
+                            <div class="alert alert-success d-flex align-items-center mb-4" role="alert">
+                                <i class="bi bi-check-circle-fill me-2" style="font-size: 1.25rem;"></i>
+                                <div>@SuccessMessage</div>
+                            </div>
+                        }
+
+                        @* --- Error Message --- *@
+                        @if (!string.IsNullOrEmpty(FormErrorMessage))
+                        {
+                            <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-2" style="font-size: 1.25rem;"></i>
+                                <div>**Error:** @FormErrorMessage</div>
+                            </div>
+                        }
+
+                        @* --- Name & Last Name (Uses IsEditMode to select model) --- *@
+                        <div class="row">
+                            @if (IsEditMode)
+                            {
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">First Name</label>
+                                    <InputText class="form-control" @bind-Value="UpdateModel.Name" disabled="@IsFormDisabled" />
+                                    <ValidationMessage For="@(() => UpdateModel.Name)" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Last Name</label>
+                                    <InputText class="form-control" @bind-Value="UpdateModel.LastName" disabled="@IsFormDisabled" />
+                                    <ValidationMessage For="@(() => UpdateModel.LastName)" />
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">First Name</label>
+                                    <InputText class="form-control" @bind-Value="RegisterModel.Name" disabled="@IsFormDisabled" />
+                                    <ValidationMessage For="@(() => RegisterModel.Name)" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Last Name</label>
+                                    <InputText class="form-control" @bind-Value="RegisterModel.LastName" disabled="@IsFormDisabled" />
+                                    <ValidationMessage For="@(() => RegisterModel.LastName)" />
+                                </div>
+                            }
+                        </div>
+
+                        @* --- Email (FIXED: Uses IsEditMode to select model) --- *@
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            @if (IsEditMode)
+                            {
+                                <InputText class="form-control" @bind-Value="UpdateModel.Email" disabled="@IsFormDisabled" />
+                                <ValidationMessage For="@(() => UpdateModel.Email)" />
+                            }
+                            else
+                            {
+                                <InputText class="form-control" @bind-Value="RegisterModel.Email" disabled="@IsFormDisabled" />
+                                <ValidationMessage For="@(() => RegisterModel.Email)" />
+                            }
+                        </div>
+
+                        @* --- Password (Add Only) --- *@
+                        @if (!IsEditMode)
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <InputText type="password" class="form-control" @bind-Value="RegisterModel.Password" disabled="@IsFormDisabled" />
+                                <ValidationMessage For="@(() => RegisterModel.Password)" />
+                            </div>
+                        }
+
+                        @* --- Role (Uses CurrentModelRole helper property) --- *@
+                        <div class="mb-3">
+                            <label class="form-label">Role</label>
+                            <InputSelect class="form-select" @bind-Value="CurrentModelRole" disabled="@IsFormDisabled">
+                                <option value="">Select Role</option>
+                                <option value="Student">Student</option>
+                                <option value="Teacher">Teacher</option>
+                                <option value="Admin">Admin</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => CurrentModelRole)" />
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="OnClose" disabled="@IsFormDisabled">Cancel</button>
+                        <button type="submit" class="btn @(IsEditMode ? "btn-warning" : "btn-primary")" disabled="@IsFormDisabled">
+                            @if (FormIsLoading)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                <span class="visually-hidden">Loading...</span>
+                            }
+                            else
+                            {
+                                <span>@(IsEditMode ? "Save Changes" : "Create User")</span>
+                            }
+                        </button>
+                    </div>
+                </EditForm>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnFormSubmitted { get; set; }
+    [Parameter] public bool IsEditMode { get; set; } = false;
+    [Parameter] public int UserId { get; set; }
+
+    private object Model { get; set; } = new RegisterDto();
+    private EditContext editContext = null!;
+    private bool FormIsLoading = false;
+    private bool isLoadingInitialData = false;
+    private string? FormErrorMessage;
+    private string? SuccessMessage;
+
+    // These properties ensure we always get a non-null DTO matching the EditForm's Model object.
+    private RegisterDto RegisterModel => Model as RegisterDto ?? new RegisterDto();
+    private UserUpdateDto UpdateModel => Model as UserUpdateDto ?? new UserUpdateDto();
+
+    // Helper for role binding
+    private string? CurrentModelRole
+    {
+        get => IsEditMode ? UpdateModel.role : RegisterModel.Role;
+        set
+        {
+            if (IsEditMode)
+                UpdateModel.role = value;
+            else
+                RegisterModel.Role = value;
+        }
+    }
+
+    private bool IsFormDisabled => FormIsLoading || isLoadingInitialData || !string.IsNullOrEmpty(SuccessMessage);
+
+    protected override void OnInitialized()
+    {
+        // Initialize Model based on mode
+        Model = IsEditMode ? new UserUpdateDto() : new RegisterDto() { Role = "Student" };
+        editContext = new EditContext(Model);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // The check UpdateModel.Id == 0 is slightly dangerous if it's possible to edit Id 0.
+        // A safer check is usually !editContext.IsModified() or checking a flag, but following original logic:
+        if (IsEditMode && UserId > 0 && UpdateModel.Id == 0)
+        {
+            isLoadingInitialData = true;
+            await LoadUserDataForEdit();
+            isLoadingInitialData = false;
+            StateHasChanged(); // Force update after loading data
+        }
+    }
+
+    private async Task LoadUserDataForEdit()
+    {
+        FormErrorMessage = null;
+        try
+        {
+            var userReadDto = await UserService.GetUserByIdAsync(UserId);
+            if (userReadDto != null)
+            {
+                UpdateModel.Id = userReadDto.Id;
+                UpdateModel.Name = userReadDto.Name ?? string.Empty;
+                UpdateModel.LastName = userReadDto.LastName ?? string.Empty;
+                // FIXED: Using ?? string.Empty to address warning CS8601 
+                UpdateModel.role = userReadDto.Role ?? string.Empty; 
+                UpdateModel.Email = userReadDto.Email ?? string.Empty;
+                // Re-initialize EditContext with the loaded model instance
+                editContext = new EditContext(UpdateModel);
+            }
+            else
+            {
+                FormErrorMessage = "Could not find user data for editing.";
+            }
+        }
+        catch (Exception ex)
+        {
+            FormErrorMessage = $"Error loading user data: {ex.Message}";
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        FormIsLoading = true;
+        FormErrorMessage = null;
+        SuccessMessage = null;
+
+        try
+        {
+            if (IsEditMode)
+            {
+                var updatedUser = await UserService.UpdateUserAsync(UpdateModel);
+                if (updatedUser != null)
+                {
+                    SuccessMessage = $"User updated successfully! (New Email: {updatedUser.Email})";
+                    await OnFormSubmitted.InvokeAsync();
+                    await Task.Delay(2000);
+                    await OnClose.InvokeAsync();
+                }
+                else
+                {
+                    FormErrorMessage = "Update failed: The server rejected the changes or the user was not found.";
+                }
+            }
+            else
+            {
+                var result = await UserService.RegisterAsync(RegisterModel);
+                if (result.IsSuccess)
+                {
+                    SuccessMessage = $"New user {RegisterModel.Email} created successfully!";
+                    await OnFormSubmitted.InvokeAsync();
+                    await Task.Delay(2000);
+                    await OnClose.InvokeAsync();
+                }
+                else
+                {
+                    FormErrorMessage = result.Errors != null
+                        ? string.Join(". ", result.Errors.Where(e => !string.IsNullOrWhiteSpace(e)))
+                        : "Unknown error occurred during registration.";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            FormErrorMessage = $"Unexpected error: {ex.Message}";
+        }
+        finally
+        {
+            FormIsLoading = false;
+            StateHasChanged();
+        }
+    }
+}

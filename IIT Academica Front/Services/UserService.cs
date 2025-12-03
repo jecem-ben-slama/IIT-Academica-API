@@ -94,7 +94,6 @@ namespace IIT_Academica_Front.Services
                 return await response.Content.ReadFromJsonAsync<UserReadDto>();
             }
             
-            // In a real app, you would parse the error list from the BadRequest response
             return null;
         }
 

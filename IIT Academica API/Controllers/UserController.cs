@@ -120,23 +120,55 @@ public class UserController : ControllerBase
     [HttpPut("update")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateUser([FromBody] UserUpdateDto model)
-    {
-        var user = await _userRepository.GetByIdAsync(model.Id);
+{
+    var user = await _userRepository.GetByIdAsync(model.Id);
 
-        if (user == null) return NotFound("User not found.");
+    if (user == null)
+        return NotFound("User not found.");
 
-        user.Name = model.Name!;
-        user.LastName = model.LastName!;
-        user.Email = model.Email;
-        user.UserName = model.Email;
+    // ---- Update basic user info ----
+    user.Name = model.Name!;
+    user.LastName = model.LastName!;
+    user.Email = model.Email;
+    user.UserName = model.Email;
 
-        var result = await _userRepository.UpdateAsync(user);
+    // ---- Update user data ----
+    var result = await _userRepository.UpdateAsync(user);
 
-        if (result.Succeeded)
-            return Ok(new UserReadDto { Id = user.Id, Email = user.Email, Name = user.Name!, LastName = user.LastName! });
-
+    if (!result.Succeeded)
         return BadRequest(result.Errors);
+
+    // ---- Update role if provided ----
+    if (!string.IsNullOrWhiteSpace(model.role))
+    {
+        // Get the current role
+        var currentRole = await _userRepository.GetUserRoleAsync(user);
+
+        if (currentRole != model.role)
+        {
+            // Remove old role (if exists)
+            if (currentRole != null)
+                await _userRepository.RemoveFromRoleAsync(user, currentRole);
+
+            // Add new role
+            var addRoleResult = await _userRepository.AddToRoleAsync(user, model.role);
+
+            if (!addRoleResult.Succeeded)
+                return BadRequest(addRoleResult.Errors);
+        }
     }
+
+    // ---- Return updated user ----
+    return Ok(new UserReadDto 
+    { 
+        Id = user.Id, 
+        Email = user.Email, 
+        Name = user.Name!, 
+        LastName = user.LastName!, 
+        Role = model.role!
+    });
+}
+
 
     [HttpDelete("delete")]
 [Authorize(Roles = "Admin")]

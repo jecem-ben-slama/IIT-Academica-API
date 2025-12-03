@@ -10,10 +10,13 @@ public class UserRepository : IUserRepository
     private readonly ApplicationDbContext _context;
    private readonly UserManager<ApplicationUser> _userManager;
 
+
     public UserRepository(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+
     {
         _context = context;
         _userManager = userManager;
+        
     }
 
     public async Task<IdentityResult> RegisterAndAssignRoleAsync(ApplicationUser user, string password, string role)
@@ -94,4 +97,20 @@ public class UserRepository : IUserRepository
 
         return students;
     }
+    public async Task<string?> GetUserRoleAsync(ApplicationUser user)
+{
+    var roles = await _userManager.GetRolesAsync(user);
+    return roles.FirstOrDefault();
+}
+public async Task<IdentityResult> AddToRoleAsync(ApplicationUser user, string role)
+{
+    return await _userManager.AddToRoleAsync(user, role);
+}
+
+public async Task<IdentityResult> RemoveFromRoleAsync(ApplicationUser user, string role)
+{
+    return await _userManager.RemoveFromRoleAsync(user, role);
+}
+
+
 }

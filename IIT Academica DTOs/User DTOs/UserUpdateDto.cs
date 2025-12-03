@@ -10,5 +10,6 @@ public class UserUpdateDto
     public string Email { get; set; }
     public string Name { get; set; }
     public string? LastName { get; set; }
+    public string? role { get; set; }
 
 }

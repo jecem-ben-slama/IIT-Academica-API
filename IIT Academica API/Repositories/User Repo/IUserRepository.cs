@@ -27,4 +27,10 @@ public interface IUserRepository
     Task<IEnumerable<ApplicationUser>> GetUsersByRoleAsync(string roleName);
     Task<int?> GetUserIdByEmailAsync(string email);
     Task<IEnumerable<ApplicationUser>> GetStudentsInTeacherSubjectAsync(int spaceId);
+    Task<string?> GetUserRoleAsync(ApplicationUser user);
+    Task<IdentityResult> AddToRoleAsync(ApplicationUser user, string role);
+Task<IdentityResult> RemoveFromRoleAsync(ApplicationUser user, string role);
+
+
+    
 }

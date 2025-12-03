@@ -1,0 +1,183 @@
+@using Microsoft.AspNetCore.Components.Forms
+@inject UserService UserService
+
+<div class="row mb-4 align-items-center justify-content-between">
+    <div class="col-md-6 mb-3 mb-md-0">
+        <input id="searchQuery" class="form-control"
+               type="text"
+               placeholder="Search name or email..."
+               @bind="SearchQuery"
+               @bind:event="oninput" />
+    </div>
+
+    <div class="col-md-6 d-flex justify-content-end gap-2">
+        <button class="btn btn-outline-primary" title="Refresh List" @onclick="RefreshList">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+
+        <button class="btn btn-success d-flex align-items-center gap-2" @onclick="OpenAddUserModal">
+            <i class="bi bi-person-plus-fill"></i> Add User
+        </button>
+    </div>
+</div>
+
+@if (IsLoading)
+{
+    <div class="text-center mt-4">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p>Loading users...</p>
+    </div>
+}
+else if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger mt-3">@ErrorMessage</div>
+}
+else if (FilteredStudents == null || !FilteredStudents.Any())
+{
+    <div class="alert alert-info mt-3 text-center">No user records found.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover shadow-sm rounded">
+            <thead class="bg-primary text-white">
+                <tr>
+                    <th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var student in FilteredStudents)
+                {
+                    <tr>
+                        <td>@student.Id</td>
+                        <td>@student.Name @student.LastName</td>
+                        <td>@student.Email</td>
+                        <td>@student.Role</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" @onclick="() => OpenEditUserModal(student.Id)">Edit</button>
+                            <button class="btn btn-sm btn-danger" @onclick="()=>ConfirmDelete(student.Id, student.Email)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@* --- Modals --- *@
+@if (ShowUserModal)
+{
+    <UserFormModal IsEditMode="@(UserToEditId > 0)" UserId="@UserToEditId" OnClose="CloseUserModal" OnFormSubmitted="HandleUserFormSubmitted" />
+}
+
+@if (ShowDeleteConfirm)
+{
+    <div class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirm Deletion</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete **@UserToDeleteEmail**?</p>
+                    <p class="text-danger small">This cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                    <button class="btn btn-danger" @onclick="HandleDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public List<UserReadDto>? Students { get; set; }
+
+    private string SearchQuery { get; set; } = string.Empty;
+    private bool IsLoading { get; set; } = false;
+    private string? ErrorMessage { get; set; }
+
+    private bool ShowUserModal = false;
+    private int UserToEditId = 0;
+
+    private bool ShowDeleteConfirm = false;
+    private int UserToDeleteId;
+    private string UserToDeleteEmail = "";
+
+    private IEnumerable<UserReadDto> FilteredStudents => Students?.Where(s =>
+        string.IsNullOrEmpty(SearchQuery) ||
+        $"{s.Name} {s.LastName}".Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) ||
+        s.Email.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase)
+    ) ?? Enumerable.Empty<UserReadDto>();
+
+    private void OpenAddUserModal()
+    {
+        UserToEditId = 0;
+        ShowUserModal = true;
+    }
+
+    private void OpenEditUserModal(int id)
+    {
+        UserToEditId = id;
+        ShowUserModal = true;
+    }
+
+    private void CloseUserModal() => ShowUserModal = false;
+
+    private async Task HandleUserFormSubmitted()
+    {
+        CloseUserModal();
+        await RefreshList();
+    }
+
+    private void ConfirmDelete(int id, string email)
+    {
+        UserToDeleteId = id;
+        UserToDeleteEmail = email;
+        ShowDeleteConfirm = true;
+    }
+
+    private void CancelDelete() => ShowDeleteConfirm = false;
+
+    private async Task HandleDelete()
+    {
+        ShowDeleteConfirm = false;
+        if (UserToDeleteId <= 0) return;
+        IsLoading = true;
+
+        try
+        {
+            await UserService.DeleteUserAsync(UserToDeleteId);
+            await RefreshList();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Delete failed: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task RefreshList()
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+
+        try
+        {
+            await Task.Delay(200);
+            Students = await UserService.GetAllUsersAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to load users: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}
