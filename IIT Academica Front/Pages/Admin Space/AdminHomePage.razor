@@ -6,33 +6,56 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject UserService UserService
 
-<h2>📚 Admin Dashboard</h2>
+@* Capture the Layout context (required for Cascading Parameter pattern) *@
+@if (AdminLayoutContext == null)
+{
+    @* Render nothing or a loading spinner until the Layout is ready *@
+    <p>Loading Admin...</p>
+}
+else
+{
+    <h2>📚 Admin Dashboard</h2>
 
-<AdminTopBar SelectedRole="@SelectedRole" OnSelectRole="SelectRoleFilter" />
+    @* NOTE: The buttons are now in the Layout. We only need the content here. *@
+    <div class="admin-content mt-4">
+        @if (SelectedRole == "" || SelectedRole == "Teacher")
+        {
+            <UserManagementView Students="Users" />
+        }
+        else if (SelectedRole == "Subjects")
+        {
+            <SubjectsView />
+        }
+        else if (SelectedRole == "Notifications")
+        {
+            <NotificationsView />
+        }
+        else
+        {
+            <p>Unknown view</p>
+        }
+    </div>
+}
 
-
-<div class="admin-content mt-4">
-    @if (SelectedRole == "" || SelectedRole == "Teacher")
-    {
-        <UserManagementView Students="Users" />
-    }
-    else if (SelectedRole == "Subjects")
-    {
-        <SubjectsView />
-    }
-    else if (SelectedRole == "Notifications")
-    {
-        <NotificationsView />
-    }
-    else
-    {
-        <p>Unknown view</p>
-    }
-</div>
 
 @code {
+    // 1. Inject the Layout's class instance
+    [CascadingParameter]
+    public AdminLayout.AdminLayoutContext? AdminLayoutContext { get; set; }
+
     private string SelectedRole { get; set; } = string.Empty;
     private List<UserReadDto>? Users;
+
+
+    // 2. Initialize the context in the Layout when ready
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && AdminLayoutContext != null)
+        {
+            AdminLayoutContext.SelectedRole = SelectedRole;
+            AdminLayoutContext.RoleSelectedCallback = SelectRoleFilter;
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -49,7 +72,17 @@
         await LoadUsersAsync();
     }
 
-    private void SelectRoleFilter(string role) => SelectedRole = (SelectedRole == role) ? string.Empty : role;
+    private void SelectRoleFilter(string role)
+    {
+        SelectedRole = (SelectedRole == role) ? string.Empty : role;
+        // 3. Update the Layout's context whenever the role changes
+        if (AdminLayoutContext != null)
+        {
+            AdminLayoutContext.SelectedRole = SelectedRole;
+        }
+        // Force the page content to re-render
+        StateHasChanged(); 
+    }
 
     private async Task LoadUsersAsync()
     {
