@@ -1,111 +1,141 @@
 @page "/admin"
+@using System.Runtime.InteropServices
+@using Microsoft.AspNetCore.Components.Authorization
+
 @attribute [Authorize(Roles = "Admin")]
 @layout AdminLayout 
 @inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager 
 @inject AuthService AuthService
 @inject UserService UserService
 
-@* --- Content that will be rendered inside the @Body of AdminLayout --- *@
+<!-- FILTER BUTTONS USING ICONS -->
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-10 col-xl-95">
 
+        <div class="row mb-5">
+            <div class="col-12 d-flex justify-content-center flex-wrap gap-4">
 
-            
-@*! Modify this to be synamic or delete*@
-<h2>📚 Student List</h2>
+                <!-- USERS FILTER -->
+                <button class="btn btn-secondary action-rect-btn @(SelectedRole == "Users" ? "action-active" : "")"
+                        @onclick="@(() => SelectRoleFilter("Users"))"
+                        title="Users">
+                    <i class="bi bi-people-fill fs-2"></i>
+                </button>
 
-@* === New Filtering and Search Controls === *@
-    <div class="row justify-content-center mt-4"> @* Center the column containing the table *@
+                <!-- TEACHER FILTER -->
+                <button class="btn btn-primary action-rect-btn @(SelectedRole == "Teacher" ? "action-active" : "")"
+                        @onclick="@(() => SelectRoleFilter("Teacher"))"
+                        title="Teachers">
+                    <i class="bi bi-journal-bookmark-fill fs-2"></i>
+                </button>
 
-<div class="col-lg-10 col-xl-95"> @* Define the maximum width of the table (80-90% of container) *@
+                <!-- SUBJECTS FILTER -->
+                <button class="btn btn-info text-white action-rect-btn @(SelectedRole == "Subjects" ? "action-active" : "")"
+                        @onclick="@(() => SelectRoleFilter("Subjects"))"
+                        title="Subjects">
+                    <i class="bi bi-book fs-2"></i>
+                </button>
 
-<div class="row mb-4">
-    
-    <div class="col-md-3">
-        <label for="roleFilter" class="form-label">Filter by Role</label>
-        <select id="roleFilter" class="form-select" @bind="SelectedRole">
-            <option value="">All Roles</option>
-            <option value="Admin">Admin</option>
-            <option value="Student">Student</option>
-            <option value="Teacher">Teacher</option>
-           
-            @* Add other roles as needed *@
-        </select>
-    </div>
+                <!-- NOTIFICATIONS FILTER -->
+                <button class="btn btn-warning action-rect-btn @(SelectedRole == "Notifications" ? "action-active" : "")"
+                        @onclick="@(() => SelectRoleFilter("Notifications"))"
+                        title="Notifications">
+                    <i class="bi bi-bell-fill fs-2"></i>
+                </button>
 
-    @* --- Search Bar Input --- *@
-    <div class="col-md-6">
-        <label for="searchQuery" class="form-label">Search by Name or Email</label>
-        <input id="searchQuery" class="form-control" type="text" placeholder="Enter name or email..." @bind="SearchQuery" @bind:event="oninput" />
-    </div>
-
-    @* --- Refresh Button --- *@
-    <div class="col-md-3 d-flex align-items-end">
-        <button class="btn btn-outline-primary w-100" @onclick="LoadStudentsAsync">
-             <i class="bi bi-arrow-clockwise"></i> Refresh List
-        </button>
-    </div>
-</div>
-</div>
-</div>
-<hr class="mt-1 mb-1" />
-
-@* ========================================= *@
-            
-@if (isLoading)
-{
-     <div class="row justify-content-center mt-4"> @* Center the column containing the table *@
-
-<div class="col-lg-10 col-xl-9">
-    <div class="card shadow-sm mt-3">
-        <div class="card-body">
-            <h5 class="card-title skeleton-line short"></h5>
-            
-            <div class="table-responsive skeleton-table mt-4">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (int i = 0; i < 5; i++)
-                        {
-                            <tr>
-                                <td><div class="skeleton-line tiny"></div></td>
-                                <td><div class="skeleton-line medium"></div></td>
-                                <td><div class="skeleton-line long"></div></td>
-                                <td><div class="skeleton-line short"></div></td>
-                                <td><div class="skeleton-line tiny"></div></td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
             </div>
         </div>
-    </div> </div>
-    </div>
-    
-    
-}
 
+        <!-- SEARCH + ACTION ROW -->
+        <div class="row mb-4 align-items-center justify-content-between">
+
+            <div class="col-md-4">
+                <input id="searchQuery" class="form-control"
+                       type="text"
+                       placeholder="Search name or email..."
+                       @bind="SearchQuery"
+                       @bind:event="oninput" />
+            </div>
+
+            <div class="col-md-4 d-flex justify-content-end gap-2">
+
+                <!-- REFRESH BUTTON -->
+                <button class="btn btn-outline-primary" title="Refresh List" @onclick="LoadStudentsAsync">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+
+                <!-- DYNAMIC ADD BUTTON WITH ICON ONLY -->
+                @if (!string.IsNullOrEmpty(SelectedRole))
+                {
+                    <button class="btn btn-success d-flex align-items-center gap-2" @onclick="OpenAddUserModal">
+                        @AddIcon
+                    </button>
+                }
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+---
+
+@if (isLoading)
+{
+    <!-- SKELETON UI -->
+    <div class="row justify-content-center mt-4"> 
+        <div class="col-lg-10 col-xl-9">
+            <div class="card shadow-sm mt-3">
+                <div class="card-body">
+                    <h5 class="card-title skeleton-line short"></h5>
+                    <div class="table-responsive skeleton-table mt-4">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th> <th>Name</th> <th>Email</th> <th>Role</th> <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < 5; i++)
+                                {
+                                    <tr>
+                                        <td><div class="skeleton-line tiny"></div></td>
+                                        <td><div class="skeleton-line medium"></div></td>
+                                        <td><div class="skeleton-line long"></div></td>
+                                        <td><div class="skeleton-line short"></div></td>
+                                        <td><div class="skeleton-line tiny"></div></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div> 
+    </div>
+}
 else if (errorMessage != null)
 {
-    @* ... Error Alert ... *@
+    <div class="alert alert-danger mt-3" role="alert">
+        <h4 class="alert-heading">Operation Failed!</h4>
+        <p>@errorMessage</p>
+        <hr>
+        <p class="mb-0">Please try again later.</p>
+    </div>
 }
 else if (FilteredStudents == null || !FilteredStudents.Any())
 {
-    <div class="alert alert-info mt-3">
-        No student records found based on the current filters.
+    <div class="alert alert-info mt-3 text-center">
+        No user records found based on your filters.
     </div>
 }
 else
 {
-    <div class="row justify-content-center mt-4"> @* Center the column containing the table *@
-        <div class="col-lg-10 col-xl-95"> @* Define the maximum width of the table (80-90% of container) *@
+    <!-- DATA TABLE -->
+    <div class="row justify-content-center mt-4">
+        <div class="col-lg-10 col-xl-95">
             <div class="table-responsive">
                 <table class="table table-striped table-hover shadow-sm rounded">
                     <thead class="bg-primary text-white">
@@ -128,6 +158,10 @@ else
                                 <td>
                                     <button class="btn btn-sm btn-info me-2">View</button>
                                     <button class="btn btn-sm btn-warning">Edit</button>
+                                    <button class="btn btn-sm btn-danger" 
+                                            @onclick="()=>ConfirmDelete(student.Id, student.Email)">
+                                        Delete
+                                    </button>
                                 </td>
                             </tr>
                         }
@@ -136,36 +170,88 @@ else
             </div>
         </div>
     </div>
+    
+    <!-- DELETE CONFIRMATION MODAL -->
+    @if (showDeleteConfirm)
+    {
+        <div class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Confirm Deletion</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete <strong>@userToDeleteEmail</strong>?</p>
+                        <p class="text-danger small">This cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                        <button class="btn btn-danger" @onclick="HandleDelete">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 }
 
-@code {   
+<!-- ADD USER MODAL -->
+@if (showAddUserModal)
+{
+    <AddUserModal OnClose="CloseAddUserModal" 
+                  OnUserAdded="HandleUserAdded" />
+}
+
+
+@code {
     private List<UserReadDto>? students; 
     private string? errorMessage;
     private bool isLoading = true;
-    private const string ScrollKey = "AdminScrollPosition"; // Unique key for storage
 
     private string SearchQuery { get; set; } = string.Empty;
     private string SelectedRole { get; set; } = string.Empty;
 
-   private IEnumerable<UserReadDto> FilteredStudents => students?
-    .Where(s => 
-        // 1. Role Filter
-        (string.IsNullOrEmpty(SelectedRole) || s.Role.Equals(SelectedRole, StringComparison.OrdinalIgnoreCase)) &&
-        // 2. Search Filter (Updated to check Full Name)
-        (string.IsNullOrEmpty(SearchQuery) || 
-         // Create a combined string for name searching:
-         $"{s.Name} {s.LastName}".Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) ||
-         s.Email.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase))
-    ) ?? Enumerable.Empty<UserReadDto>();
+    // Delete Modal State
+    private bool showDeleteConfirm = false;
+    private int userToDeleteId;
+    private string userToDeleteEmail = string.Empty;
 
-// Note: I've also switched to OrdinalIgnoreCase for better user experience.
+    // Add User Modal State
+    private bool showAddUserModal = false;
+
+    // FILTERED VIEW
+    private IEnumerable<UserReadDto> FilteredStudents => students?
+        .Where(s =>
+            (string.IsNullOrEmpty(SelectedRole) || s.Role.Equals(SelectedRole, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(SearchQuery) ||
+             $"{s.Name} {s.LastName}".Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) ||
+             s.Email.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase))
+        ) ?? Enumerable.Empty<UserReadDto>();
+
+
+    // --- DYNAMIC ADD ICON ---
+    private RenderFragment AddIcon => SelectedRole switch
+    {
+        "Users" => @<i class="bi bi-person-plus fs-4"></i>,
+        "Teacher" => @<i class="bi bi-person-plus-fill fs-4"></i>,
+        "Subjects" => @<i class="bi bi-journal-plus fs-4"></i>,
+        "Notifications" => @<i class="bi bi-bell-plus fs-4"></i>,
+        _ => @<i class="bi bi-plus-circle fs-4"></i>
+    };
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity?.IsAuthenticated ?? false)
+        {
+            NavigationManager.NavigateTo("/", true, replace: true);
+            return;
+        }
+
         await LoadStudentsAsync();
     }
-    
-    
+
     private async Task LoadStudentsAsync()
     {
         isLoading = true;
@@ -173,17 +259,76 @@ else
 
         try
         {
-            // add awit time
-             await Task.Delay(1000); // Simulate loading delay
-            students=await UserService.GetAllUsersAsync();
+            await Task.Delay(500);
+            students = await UserService.GetAllUsersAsync();
         }
         catch (Exception ex)
         {
-            errorMessage = $"Failed to fetch users list: {ex.Message}";
+            errorMessage = $"Failed to load users: {ex.Message}";
         }
         finally
         {
             isLoading = false;
+        }
+    }
+
+    private void SelectRoleFilter(string role)
+    {
+        SelectedRole = role;
+    }
+
+    private void OpenAddUserModal()
+    {
+        errorMessage = null;
+        showAddUserModal = true;
+    }
+
+    private void CloseAddUserModal()
+    {
+        showAddUserModal = false;
+    }
+
+    private async Task HandleUserAdded()
+    {
+        await LoadStudentsAsync();
+    }
+
+    private void ConfirmDelete(int id, string email)
+    {
+        userToDeleteId = id;
+        userToDeleteEmail = email;
+        showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirm = false;
+        userToDeleteId = 0;
+        userToDeleteEmail = "";
+    }
+
+    private async Task HandleDelete()
+    {
+        showDeleteConfirm = false;
+
+        if (userToDeleteId <= 0) return;
+
+        isLoading = true;
+
+        try
+        {
+            await UserService.DeleteUserAsync(userToDeleteId);
+            await LoadStudentsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Delete failed: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            userToDeleteId = 0;
+            userToDeleteEmail = "";
         }
     }
 }

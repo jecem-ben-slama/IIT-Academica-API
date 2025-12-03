@@ -45,7 +45,6 @@ public class UserController : ControllerBase
                 Token = token,
                 UserId = user.Id,
                 Role = roles.FirstOrDefault(),
-                // FIX: Map the ApplicationUser properties to the DTO properties
                 Name = user.Name,
                 LastName = user.LastName,
                 Errors = null
@@ -140,17 +139,56 @@ public class UserController : ControllerBase
     }
 
     [HttpDelete("delete")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> DeleteUser(UserDeleteDto model)
+[Authorize(Roles = "Admin")]
+public async Task<IActionResult> DeleteUser([FromBody] UserDeleteDto model)
+{
+    // The model binding will handle validation for the presence of the DTO
+    if (model == null) return BadRequest("Invalid request body.");
+
+    var user = await _userRepository.GetByIdAsync(model.Id);
+
+    if (user == null) 
     {
-        var user = await _userRepository.GetByIdAsync(model.Id);
-
-        if (user == null) return NotFound("User not found.");
-
+        return NotFound($"User with ID {model.Id} not found.");
+    }
+    
+    try
+    {
         var result = await _userRepository.DeleteAsync(user);
 
-        if (result.Succeeded) return NoContent();
-
-        return BadRequest(result.Errors);
+        if (result.Succeeded)
+        {
+            return NoContent(); // 204 Success
+        }
+        else
+        {
+            // Handle Identity errors (e.g., if it uses Identity and has internal issues)
+            return BadRequest(result.Errors);
+        }
     }
+    catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+    {
+        // 1. Check the InnerException for signs of a Foreign Key Constraint violation.
+        // This usually indicates that the user is linked to other records.
+        
+        // Note: The specific error check (InnerException message) is dependent on the database provider (SQL Server, PostgreSQL, etc.), 
+        // but checking for DbUpdateException is the first step.
+        
+        // For a foreign key violation, return a 409 Conflict.
+        // The object returned is what the client's UserService will deserialize.
+        return Conflict(new {
+            message = $"Cannot delete user '{user.Email}'. The user is currently linked to one or more records (e.g., courses, enrollments, grades). Please remove all associated records first.",
+            errorCode = "ForeignKeyConstraint"
+        });
+    }
+    catch (Exception ex)
+    {
+        // Catch any other unexpected server-side errors
+        // Log the exception details here for debugging
+        return StatusCode(500, new { 
+            message = "An unexpected error occurred during user deletion.",
+            details = ex.Message
+        });
+    }
+}
 }

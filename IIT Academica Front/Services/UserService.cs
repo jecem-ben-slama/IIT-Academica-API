@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
+using IIT_Academica_Front.Models;
 
 namespace IIT_Academica_Front.Services
 {
@@ -26,24 +27,15 @@ namespace IIT_Academica_Front.Services
 
         // --- AUTHENTICATION/REGISTER/LOGIN (Typically handled by AuthService, but included for completeness) ---
 
-        // public async Task<AuthResponseDto> RegisterAsync(RegisterDto model)
-        // {
-        //     var response = await _httpClient.PostAsJsonAsync("api/User/register", model);
-        //     return await response.Content.ReadFromJsonAsync<AuthResponseDto>() ?? new AuthResponseDto { IsSuccess = false, Message = "API communication error." };
-        // }
-
-        // public async Task<AuthResponseDto> LoginAsync(LoginDto model)
-        // {
-        //     var response = await _httpClient.PostAsJsonAsync("api/User/login", model);
-        //     return await response.Content.ReadFromJsonAsync<AuthResponseDto>() ?? new AuthResponseDto { IsSuccess = false, Message = "API communication error." };
-        // }
+         public async Task<AuthResponseDto> RegisterAsync(RegisterDto model)
+         {
+             var response = await _httpClient.PostAsJsonAsync("api/user/register", model);
+             return await response.Content.ReadFromJsonAsync<AuthResponseDto>() ?? new AuthResponseDto { IsSuccess = false, Message = "API communication error." };
+         }
 
 
-        // --- ADMIN USER MANAGEMENT ENDPOINTS ---
 
-        /// <summary>
-        /// Retrieves all users (requires Admin role). Maps to [HttpGet("GetAllUsers")].
-        /// </summary>
+        
         public async Task<List<UserReadDto>?> GetAllUsersAsync()
         {
             await SetAuthorizationHeader(); // Ensure token is attached
@@ -109,26 +101,41 @@ namespace IIT_Academica_Front.Services
         /// <summary>
         /// Deletes a user by ID (requires Admin role). Maps to [HttpDelete("delete")].
         /// </summary>
-        public async Task<bool> DeleteUserAsync(int id)
-        {
-            await SetAuthorizationHeader();
+       public async Task DeleteUserAsync(int id) 
+{
+    await SetAuthorizationHeader(); // Ensure the token is set
 
-            // Note: The API endpoint uses UserDeleteDto, but typically a DELETE operation uses a URI parameter for the ID.
-            // Assuming the API expects an ID either in the URI or in the body (sending it in the body for now matching the DTO usage).
-            var deleteDto = new UserDeleteDto { Id = id };
-
-            // Using SendAsync with HttpMethod.Delete and content, which is slightly less common but matches the API structure expecting a body.
-            // If the API was DELETE /api/User/delete/{id}, we would use DeleteAsync($"api/User/delete/{id}") instead.
-            var request = new HttpRequestMessage(HttpMethod.Delete, "api/User/delete")
-            {
-                Content = JsonContent.Create(deleteDto)
-            };
-            
-            var response = await _httpClient.SendAsync(request);
-
-            return response.IsSuccessStatusCode; // Should return true for 204 NoContent
-        }
+    // The API route is "api/user/delete", expecting the ID in the body (per your controller definition)
+    var deleteDto = new UserDeleteDto { Id = id };
+    
+    var request = new HttpRequestMessage(HttpMethod.Delete, "api/user/delete")
+    {
+        Content = JsonContent.Create(deleteDto)
+    };
+    
+    var response = await _httpClient.SendAsync(request);
+    
+    if (response.IsSuccessStatusCode)
+    {
+        return; // Success (200, 204)
     }
-
-    // You need to define these DTOs in your IIT_Academica_DTOs project:
-}
+    
+    // --- Error Handling for Foreign Key Constraint ---
+    else if (response.StatusCode == System.Net.HttpStatusCode.Conflict) // 409 Conflict
+    {
+        // 1. Read the custom JSON error body from the API
+        var errorResponse = await response.Content.ReadFromJsonAsync<ApiErrorResponse>(); 
+        
+        // 2. Throw a specific, client-friendly exception using the message from the API
+        // This message is the one you customized in the UserController.
+        throw new InvalidOperationException(errorResponse?.Message ?? "Cannot delete user due to existing linked records.");
+    }
+    // --- End of Foreign Key Handling ---
+    
+    else 
+    {
+        // Handle other non-successful status codes (400, 404, 401, 500)
+        var content = await response.Content.ReadAsStringAsync();
+        throw new HttpRequestException($"Deletion failed: API returned status code {(int)response.StatusCode}. Details: {content}");
+    }
+}}}

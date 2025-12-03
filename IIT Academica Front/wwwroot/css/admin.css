@@ -1,110 +1,78 @@
-/** Admin navbar */
-.sidebar
+/* ========================================================================== */
+/*                               ADMIN SIDEBAR                                */
+/* ========================================================================== */
+
+.sidebar,
+.sidebar-wrapper
 {
-    /* Background and shadow for the sidebar */
     background-color: #343a40 !important;
-    border-right: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-/* Ensure NavLinks are visible on the dark background */
-.sidebar .nav-link
-{
-    color: #ced4da !important;
-    padding: 0.75rem 1rem;
-    transition: background-color 0.3s, color 0.3s;
-    border-radius: 0.5rem;
-    margin-bottom: 0.5rem;
-}
-
-/* Hover and Active styles for NavLinks */
-.sidebar .nav-link:hover
-{
-    background-color: #495057;
-    color: #fff !important;
-}
-
-.sidebar .nav-link.active
-{
-    background-color: #1b6ec2 !important;
-    /* Use your primary color */
-    color: white !important;
-}
-
-/* Ensures the container takes up the full viewport height */
-.min-vh-100
-{
+    border-right: 1px solid rgba(0, 0, 0, 0.15);
     min-height: 100vh;
 }
 
-
-/* --- New Layout Structure Classes --- */
-
-/* Fixed width for the sidebar */
 .sidebar-wrapper
 {
     width: 250px;
-    /* Adjust width as preferred */
-    min-height: 100vh;
-    background-color: #343a40;
-    /* Dark background */
     flex-shrink: 0;
-    /* Prevent it from shrinking */
 }
 
-/* Ensure the content wrapper takes the remaining space */
-#page-content-wrapper
-{
-    min-width: 0;
-    /* Allows content to shrink */
-    width: 100%;
-}
-
-/* --- Existing Sidebar & NavLink Styles --- */
+/* --- NavLink Styling --- */
+.sidebar .nav-link,
 .sidebar-wrapper .nav-link
 {
     color: #ced4da !important;
     padding: 0.75rem 1rem;
-    transition: background-color 0.3s, color 0.3s;
-    border-radius: 0.5rem;
     margin-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: background-color 0.25s ease, color 0.25s ease, transform 0.15s;
 }
 
+.sidebar .nav-link:hover,
 .sidebar-wrapper .nav-link:hover
 {
     background-color: #495057;
     color: #fff !important;
+    transform: translateX(3px);
 }
 
+.sidebar .nav-link.active,
 .sidebar-wrapper .nav-link.active
 {
     background-color: #1b6ec2 !important;
     color: white !important;
+    font-weight: 600;
 }
 
-/* The min-vh-100 class is still useful on the inner element */
+/* Page content expands fully */
+#page-content-wrapper
+{
+    width: 100%;
+    min-width: 0;
+}
+
 .min-vh-100
 {
     min-height: 100vh;
 }
 
-/** --- SKELETON BASE STYLES --- */
+
+
+/* ========================================================================== */
+/*                               SKELETON LOADING                             */
+/* ========================================================================== */
+
 .skeleton-line
 {
-    /* Base dimensions */
     background-color: #e2e5e7;
-    /* Light gray color */
     height: 1em;
-    /* Standard line height */
     border-radius: 4px;
-    /* Rounded corners */
     margin-bottom: 0.5em;
     opacity: 0.7;
-
-    /* Animation */
     animation: pulse 1.5s infinite ease-in-out;
 }
 
-/* Adjust line lengths */
+/* Line lengths */
 .skeleton-line.tiny
 {
     width: 25%;
@@ -125,14 +93,12 @@
     width: 90%;
 }
 
-/* Ensure the table body rows maintain height */
+/* Maintain table height */
 .skeleton-table tbody tr
 {
     height: 3.5rem;
-    /* Ensure rows don't collapse when content is just skeleton-lines */
 }
 
-/* --- PULSE ANIMATION --- */
 @keyframes pulse
 {
     0%
@@ -149,4 +115,277 @@
     {
         opacity: 0.7;
     }
+}
+
+
+
+/* ========================================================================== */
+/*                                   MODALS                                   */
+/* ========================================================================== */
+
+.modal.d-block
+{
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal-dialog
+{
+    max-width: 450px;
+    margin: 1.75rem auto;
+    transition: transform 0.3s ease-out;
+}
+
+.modal-content
+{
+    border-radius: 12px;
+    border: none;
+    overflow: hidden;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+}
+
+/* Header */
+.modal-header
+{
+    background-color: var(--bs-primary, #0d6efd);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-bottom: none;
+}
+
+.modal-header .modal-title
+{
+    font-weight: 600;
+}
+
+.btn-close-white
+{
+    filter: invert(1);
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.btn-close-white:hover
+{
+    opacity: 1;
+}
+
+/* Body */
+.modal-body
+{
+    padding: 1.5rem 2rem;
+}
+
+/* Form Fields */
+.form-label
+{
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.35rem;
+}
+
+.form-control,
+.form-select
+{
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.form-control:focus,
+.form-select:focus
+{
+    border-color: var(--bs-primary, #0d6efd);
+    box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25);
+}
+
+/* Validation */
+.validation-message
+{
+    color: var(--bs-danger, #dc3545);
+    font-size: 0.8rem;
+    margin-top: 0.35rem;
+}
+
+/* Footer */
+.modal-footer
+{
+    border-top: 1px solid #e9ecef;
+    padding: 1rem 2rem 1.5rem;
+}
+
+.modal-footer .btn
+{
+    border-radius: 8px;
+    padding: 0.6rem 1.5rem;
+    font-weight: 600;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.modal-footer .btn-primary
+{
+    background-color: var(--bs-primary, #0d6efd);
+    border-color: var(--bs-primary, #0d6efd);
+}
+
+.modal-footer .btn-primary:active,
+.modal-footer .btn-secondary:active
+{
+    transform: translateY(1px);
+}
+
+.modal-footer .btn-secondary
+{
+    background-color: #f8f9fa;
+    color: #495057;
+    border: 1px solid #ced4da;
+}
+
+
+
+/* ========================================================================== */
+/*                          DASHBOARD ACTION BUTTONS                          */
+/* ========================================================================== */
+
+.action-rect-btn
+{
+    width: 160px;
+    height: 90px;
+    border-radius: 14px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    color: white !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.action-rect-btn:hover
+{
+    transform: translateY(-4px);
+    box-shadow: 0 10px 14px rgba(0, 0, 0, 0.15);
+}
+
+.action-rect-btn i
+{
+    font-size: 2rem;
+    margin-bottom: 5px;
+}
+
+.action-rect-btn .btn-label
+{
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+
+
+/* ========================================================================== */
+/*                         FILTER BUTTONS + ICON BUTTONS                      */
+/* ========================================================================== */
+
+.filter-btn
+{
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 2px solid #0d6efd;
+    background: white;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.25s ease-in-out;
+}
+
+.filter-btn:hover
+{
+    background: #e8f0ff;
+}
+
+.active-filter
+{
+    background: #0d6efd !important;
+    color: white !important;
+}
+
+.icon-btn
+{
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    border: 2px solid #0d6efd;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    transition: 0.25s ease;
+}
+
+.icon-btn:hover
+{
+    background: #e8f0ff;
+}
+
+.add-btn
+{
+    border-color: #198754;
+}
+
+.add-btn:hover
+{
+    background: #d7f7e3;
+}
+
+.action-active
+{
+    outline: 3px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25) !important;
+    transform: translateY(-4px) !important;
+}
+
+/* Rectangular Filter Buttons */
+.action-rect-btn
+{
+    width: 140px;
+    height: 80px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s, border 0.2s;
+    color: white !important;
+}
+
+.action-rect-btn:hover
+{
+    transform: translateY(-3px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+}
+
+.action-rect-btn i
+{
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+}
+
+.action-rect-btn .btn-label
+{
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Active State for Filter Buttons (Highlight border/scale) */
+.action-active
+{
+    border: 3px solid #ffc107 !important;
+    /* Gold border to indicate selection */
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
 }

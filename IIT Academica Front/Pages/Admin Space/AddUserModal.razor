@@ -1,0 +1,161 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using System.ComponentModel.DataAnnotations 
+@inject UserService UserService
+
+<div class="modal d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">➕ Add New User</h5>
+                <button type="button" class="btn-close btn-close-white" aria-label="Close" @onclick="OnClose"></button>
+            </div>
+            
+            <EditForm Model="User" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <div class="modal-body">
+                    
+                    @* --- Enhanced Error Message Display --- *@
+                    @if (!string.IsNullOrEmpty(FormErrorMessage))
+                    {
+                        <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2" style="font-size: 1.25rem;"></i>
+                            <div>
+                                **Error:** @FormErrorMessage
+                            </div>
+                        </div>
+                    }
+                    @if (FormIsLoading)
+                    {
+                        <p class="text-center text-primary">Saving user data...</p>
+                    }
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label">First Name</label>
+                        <InputText id="name" class="form-control" @bind-Value="User.Name" />
+                        <ValidationMessage For="@(() => User.Name)" />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="lastname" class="form-label">Last Name</label>
+                        <InputText id="lastname" class="form-control" @bind-Value="User.LastName" />
+                        <ValidationMessage For="@(() => User.LastName)" />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <InputText id="email" class="form-control" @bind-Value="User.Email" />
+                        <ValidationMessage For="@(() => User.Email)" />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <InputText id="password" class="form-control" type="password" @bind-Value="User.Password" />
+                        <ValidationMessage For="@(() => User.Password)" />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role</label>
+                        <InputSelect id="role" class="form-select" @bind-Value="User.Role">
+                            <option value="">Select Role</option>
+                            <option value="Student">Student</option>
+                            <option value="Teacher">Teacher</option>
+                            <option value="Admin">Admin</option>
+                        </InputSelect>
+                        <ValidationMessage For="@(() => User.Role)" />
+                    </div>
+
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="OnClose" disabled="@FormIsLoading">Cancel</button>
+                    <button type="submit" class="btn btn-primary" disabled="@FormIsLoading">
+                        @if (FormIsLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true">Saving...</span>
+                        }
+                        else
+                        {
+                            <span>Create User</span>
+                        }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    // NOTE: You must have a RegisterDto class defined in your project for this component to compile.
+    // Example: public class RegisterDto { [Required] public string Name { get; set; } ... }
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    [Parameter]
+    public EventCallback OnUserAdded { get; set; }
+
+    private RegisterDto User = new RegisterDto();
+    private bool FormIsLoading = false;
+    private string? FormErrorMessage;
+    
+    // Assuming RegisterDto is a class in your solution with properties:
+    // Name, LastName, Email, Password, Role.
+
+    private async Task HandleValidSubmit()
+    {
+        FormIsLoading = true;
+        FormErrorMessage = null; // Clear previous error
+
+        try
+        {
+            // Assuming UserService.RegisterAsync returns a structured object (e.g., Result<UserReadDto>)
+            // where 'IsSuccess' is a bool and 'Errors' is an IEnumerable<string>.
+            var result = await UserService.RegisterAsync(User); 
+            
+            if (result.IsSuccess) 
+            {
+                // Success: Reset form, notify parent, and close modal
+                User = new RegisterDto(); 
+                await OnUserAdded.InvokeAsync(); 
+                await OnClose.InvokeAsync(); 
+            }
+            else
+            {
+                // Handle API error that returns a structured failure response
+                if (result.Errors?.Any() == true)
+                {
+                    // Concatenate specific validation errors (e.g., "Email is taken")
+                    FormErrorMessage = string.Join(". ", result.Errors.Where(e => !string.IsNullOrWhiteSpace(e)));
+                }
+                else
+                {
+                    // Fallback for an unhandled structured failure
+                    FormErrorMessage = "User creation failed due to an unknown server issue.";
+                }
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            // Catch network, connection, or unhandled HTTP response errors
+            FormErrorMessage = $"Connection or API Error: The server could not be reached or returned an unexpected response. Details: {ex.Message}";
+        }
+        catch (Exception)
+        {
+            // Catch all other unexpected application errors
+            FormErrorMessage = "An unexpected error occurred while saving the user. Please try again.";
+        }
+        finally
+        {
+            FormIsLoading = false;
+            // Force state update to display the error message immediately
+            StateHasChanged(); 
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        // Ensure the form is clean when the component initializes/opens
+        User = new RegisterDto(); 
+    }
+}
