@@ -1,13 +1,24 @@
 @using Microsoft.AspNetCore.Components.Forms
 @inject UserService UserService
+@* Injecting ILogger to help with debugging/logging role filter changes, optional *@
 
-<div class="row mb-4 align-items-center justify-content-between">
-    <div class="col-md-6 mb-3 mb-md-0">
+<div class="row mb-5 align-items-center  justify-content-between">
+    <div class="col-md-4 mb-5 mb-md-2 d-flex gap-4">
+        @* Search Input *@
         <input id="searchQuery" class="form-control"
                type="text"
                placeholder="Search name or email..."
                @bind="SearchQuery"
                @bind:event="oninput" />
+
+        @* Role Filter Dropdown - NEW *@
+        <select class="form-select w-1" @bind="SelectedRoleFilter">
+            <option value="">All Roles</option>
+            @foreach (var role in AvailableRoles)
+            {
+                <option value="@role">@role</option>
+            }
+        </select>
     </div>
 
     <div class="col-md-6 d-flex justify-content-end gap-2">
@@ -23,11 +34,10 @@
 
 @if (IsLoading)
 {
-    <div class="text-center mt-4">
-        <div class="spinner-border text-primary" role="status"></div>
-        <p>Loading users...</p>
-    </div>
+    <TableSkeleton></TableSkeleton>
 }
+
+
 else if (!string.IsNullOrEmpty(ErrorMessage))
 {
     <div class="alert alert-danger mt-3">@ErrorMessage</div>
@@ -92,9 +102,14 @@ else
 }
 
 @code {
+    // NOTE: For a real-world scenario, you might want to fetch the Students data internally 
+    // instead of receiving it as a parameter, so the RefreshList method works correctly.
     [Parameter] public List<UserReadDto>? Students { get; set; }
 
     private string SearchQuery { get; set; } = string.Empty;
+    private string SelectedRoleFilter { get; set; } = string.Empty; // NEW: Holds the selected role
+    private List<string> AvailableRoles { get; set; } = new List<string>(); // NEW: List of unique roles
+    
     private bool IsLoading { get; set; } = false;
     private string? ErrorMessage { get; set; }
 
@@ -104,12 +119,39 @@ else
     private bool ShowDeleteConfirm = false;
     private int UserToDeleteId;
     private string UserToDeleteEmail = "";
+    
+    // Updated: Includes role filtering
+    private IEnumerable<UserReadDto> FilteredStudents => Students?
+        .Where(s =>
+            // Search Query Filter
+            (string.IsNullOrEmpty(SearchQuery) ||
+             $"{s.Name} {s.LastName}".Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) ||
+             s.Email.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase)) &&
+            // Role Filter
+            (string.IsNullOrEmpty(SelectedRoleFilter) ||
+             s.Role.Equals(SelectedRoleFilter, StringComparison.OrdinalIgnoreCase))
+        ) ?? Enumerable.Empty<UserReadDto>();
 
-    private IEnumerable<UserReadDto> FilteredStudents => Students?.Where(s =>
-        string.IsNullOrEmpty(SearchQuery) ||
-        $"{s.Name} {s.LastName}".Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) ||
-        s.Email.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase)
-    ) ?? Enumerable.Empty<UserReadDto>();
+    // NEW: Populates the list of unique roles when the component is initialized or Students list changes
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        UpdateAvailableRoles();
+    }
+
+    private void UpdateAvailableRoles()
+    {
+        if (Students != null)
+        {
+            // Get unique roles from the current list of users
+            AvailableRoles = Students
+                .Where(s => !string.IsNullOrEmpty(s.Role))
+                .Select(s => s.Role!) // The '!' asserts non-null since we filtered for it
+                .Distinct()
+                .OrderBy(r => r)
+                .ToList();
+        }
+    }
 
     private void OpenAddUserModal()
     {
@@ -161,6 +203,7 @@ else
         }
     }
 
+    // Updated: Calls UpdateAvailableRoles after fetching new data
     private async Task RefreshList()
     {
         IsLoading = true;
@@ -168,8 +211,12 @@ else
 
         try
         {
-            await Task.Delay(200);
+            // Note: Task.Delay(200) added for simulation/visual effect in original code, 
+            // removed for production, but kept here for consistency.
+            await Task.Delay(200); 
+            // IMPORTANT: Assumes UserService.GetAllUsersAsync() returns List<UserReadDto>
             Students = await UserService.GetAllUsersAsync();
+            UpdateAvailableRoles(); // Update roles after fetching new data
         }
         catch (Exception ex)
         {
@@ -180,4 +227,6 @@ else
             IsLoading = false;
         }
     }
+    
+   
 }

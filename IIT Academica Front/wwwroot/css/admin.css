@@ -389,3 +389,47 @@
     transform: scale(1.05);
     box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
 }
+
+/* Target the container for search and filter */
+.row.mb-4.align-items-center.justify-content-between .col-md-6.d-flex.gap-2
+{
+    /* Ensures the row elements are positioned correctly */
+    display: flex;
+    align-items: center;
+}
+
+/* Target the select element specifically */
+.row.mb-.align-items-center.justify-content-between .col-md-6.d-flex.gap-2 .form-select
+{
+    /* Reduce the width of the dropdown to a more sensible size */
+    width: 180px !important;
+    /* Adjust as needed */
+
+    /* Ensure height matches the search input (form-control) */
+    height: calc(1.5em + .75rem + 2px);
+    /* Standard Bootstrap height */
+
+    /* You may want to add custom styling here for border, background, etc. */
+    border-radius: .25rem;
+    box-shadow: none;
+}
+
+/* Ensure the search bar takes up the remaining space */
+.row.mb-4.align-items-center.justify-content-between .col-md-6.d-flex.gap-2 .form-control
+{
+    flex-grow: 1;
+}
+
+/* If the user list is the only item in the column, ensure it stretches */
+/* This targets the column wrapping the search and filter */
+.col-md-6.mb-3.mb-md-0
+{
+    flex-grow: 1;
+}
+
+/* If you need to increase the font size of the table header */
+.table thead th
+{
+    font-weight: 600;
+    font-size: 1rem;
+}
