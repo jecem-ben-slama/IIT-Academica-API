@@ -2,6 +2,9 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @attribute [Authorize(Roles = "Admin")]
 @layout AdminLayout
+@using TableSkeleton
+@using UserManagementView
+@using SubjectsView
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthStateProvider
 @inject UserService UserService
@@ -9,8 +12,7 @@
 @* Capture the Layout context (required for Cascading Parameter pattern) *@
 @if (AdminLayoutContext == null)
 {
-    @* Render nothing or a loading spinner until the Layout is ready *@
-    <p>Loading Admin...</p>
+   <TableSkeleton />
 }
 else
 {
@@ -28,7 +30,6 @@ else
         }
         else if (SelectedRole == "Notifications")
         {
-            <NotificationsView />
         }
         else
         {

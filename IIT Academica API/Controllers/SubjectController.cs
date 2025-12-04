@@ -130,6 +130,8 @@ public class SubjectsController : ControllerBase
         // 1. Map DTO changes onto the existing Entity
         existingEntity.Title = updateDto.SubjectName;
         existingEntity.TeacherId = updateDto.TeacherId;
+        existingEntity.RegistrationCode=updateDto.RegistrationCode;
+        
 
         // 2. Mark as modified and commit
         await Repository.UpdateAsync(existingEntity);
@@ -149,10 +151,7 @@ public class SubjectsController : ControllerBase
         // DeleteAsync finds the entity and removes it
         var deleted = await Repository.DeleteAsync(id);
 
-        // Commit the transaction to save the deletion (assuming DeleteAsync does NOT call SaveChangesAsync)
-        // NOTE: If your Repository.DeleteAsync calls SaveChangesAsync internally, remove this line.
-        // Based on your provided Repository, it seems DeleteAsync only removes the entity.
-        await _unitOfWork.CompleteAsync();
+       await _unitOfWork.CompleteAsync();
 
         if (!deleted)
         {

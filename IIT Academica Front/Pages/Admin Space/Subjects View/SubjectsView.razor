@@ -1,0 +1,309 @@
+@namespace SubjectsView
+@using IIT_Academica_Front.Models
+@using System.Security.Claims
+@inject SubjectService SubjectService
+@inject UserService UserService
+@inject IJSRuntime JSRuntime
+
+@* This component assumes it is rendered within an Authorized context (Admin) *@
+
+<h3><span class="oi oi-book" aria-hidden="true"></span> Subject Management</h3>
+
+<p class="text-danger">@ErrorMessage</p>
+
+@if (IsLoading)
+{
+    <p><em>Loading subjects...</em></p>
+}
+else if (Subjects == null || !Subjects.Any())
+{
+    <p class="text-info">No subjects found.</p>
+}
+else
+{
+    @* --- Admin: Add New Button --- *@
+    <button class="btn btn-primary mb-3" @onclick="() => OpenCreateForm()">
+        <span class="oi oi-plus" aria-hidden="true"></span> Add New Subject
+    </button>
+
+    @* --- Subject Table --- *@
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Code</th>
+                    <th>Title</th>
+                    <th>Teacher</th>
+                    <th>Enrollments</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var subject in Subjects)
+                {
+                    <tr>
+                        <td>@subject.Id</td>
+                        <td><strong>@subject.RegistrationCode</strong></td>
+                        <td>@subject.SubjectName</td>
+                        <td>@subject.TeacherFullName (ID: @subject.TeacherId)</td>
+                        <td>@subject.EnrollmentCount</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" @onclick="() => OpenEditForm(subject)">Edit</button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteSubject(subject.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+@* ... (HTML above the modal remains the same) ... *@
+
+@* --- Create/Update Modal Forms --- *@
+@if (ShowModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(CurrentSubjectId == 0 ? "Create New Subject" : "Edit Subject")</h5>
+                    <button type="button" class="close" @onclick="CloseModal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@CurrentDto" OnValidSubmit="@HandleSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="form-group mb-3">
+                            <label>Registration Code:</label>
+                            <InputText @bind-Value="CurrentDto.RegistrationCode" class="form-control" />
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label>Title:</label>
+                            <InputText @bind-Value="CurrentDto.SubjectName" class="form-control" />
+                        </div>
+                        
+                        @* 🚀 CHANGE: Use Select for Teacher Name *@
+                        <div class="form-group mb-3">
+                            <label for="teacherSelect">Teacher:</label>
+                            @if (Teachers != null && Teachers.Any())
+                            {
+                                <InputSelect id="teacherSelect" @bind-Value="SelectedTeacherId" class="form-control">
+                                    <option value="">-- Select Teacher --</option>
+                                    @foreach (var teacher in Teachers)
+                                    {
+                                        <option value="@teacher.Id">@teacher.Name @teacher.LastName</option>
+                                    }
+                                </InputSelect>
+                            }
+                            else
+                            {
+                                <p class="text-warning">Loading teachers or none found...</p>
+                                <InputNumber @bind-Value="CurrentDto.TeacherId" class="form-control" disabled />
+                            }
+                            <ValidationMessage For="@(() => SelectedTeacherId)" />
+                        </div>
+                        @* 🚀 END CHANGE *@
+
+                        <p class="text-danger mt-2">@ModalErrorMessage</p>
+                        
+                        <div class="modal-footer mt-4">
+                            <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">@(CurrentSubjectId == 0 ? "Create" : "Update")</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // --- State ---
+    private List<SubjectDTO>? Subjects;
+    // 🚀 NEW STATE: List of available teachers
+    private List<UserReadDto>? Teachers; 
+    private string ErrorMessage = string.Empty;
+    private string ModalErrorMessage = string.Empty;
+    private bool IsLoading = true;
+
+    // --- Modal State ---
+    private bool ShowModal = false;
+    private int CurrentSubjectId = 0;
+    
+    // Using CreateSubjectDto to hold form data temporarily for both Create and Update
+    private CreateSubjectDto CurrentDto = new CreateSubjectDto();
+
+    // 🚀 NEW STATE: Helper property to handle binding for InputSelect (must be string)
+    private string SelectedTeacherId
+    {
+        get => CurrentDto.TeacherId.ToString() ?? string.Empty;
+        set
+        {
+            if (int.TryParse(value, out int id) && id > 0)
+            {
+                CurrentDto.TeacherId = id;
+            }
+            else
+            {
+                CurrentDto.TeacherId = 0; // Handle '-- Select Teacher --' option
+            }
+        }
+    }
+
+    // --- Initialization ---
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSubjectsAsync();
+        await LoadTeachersAsync(); // 🚀 Load teachers on startup
+    }
+
+    private async Task LoadSubjectsAsync()
+    {
+        // ... (existing implementation) ...
+        IsLoading = true;
+        ErrorMessage = string.Empty;
+        try
+        {
+            Subjects = await SubjectService.GetAllSubjectsAsync();
+        }
+        catch (HttpRequestException ex)
+        {
+            ErrorMessage = $"Error loading subjects: {ex.Message}";
+            Subjects = null;
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    // 🚀 NEW METHOD: Load all users/teachers
+    private async Task LoadTeachersAsync()
+    {
+        try
+        {
+            // Assuming GetAllUsersAsync returns all users, including those with role "Teacher"
+            var allUsers = await UserService.GetAllUsersAsync();
+            // Filter to only include Teacher roles for the dropdown, assuming UserReadDto has a Role property.
+            // If the API only returns Teachers, this filtering isn't needed.
+            Teachers = allUsers?
+                .Where(u => u.Role == "Teacher")
+                .ToList() ?? new List<UserReadDto>(); 
+
+        }
+        catch (HttpRequestException ex)
+        {
+            ErrorMessage = $"Error loading teachers: {ex.Message}";
+            Teachers = new List<UserReadDto>();
+        }
+    }
+
+    // --- CRUD Operations ---
+
+    private async Task HandleSubmit()
+    {
+        ModalErrorMessage = string.Empty;
+
+        // Ensure TeacherId is provided before submitting (now handled by SelectedTeacherId setter, 
+        // but this check remains valid for null/0)
+        if (CurrentDto.TeacherId == null || CurrentDto.TeacherId <= 0)
+        {
+            ModalErrorMessage = "Please select a valid Teacher.";
+            return;
+        }
+        
+        try
+        {
+            if (CurrentSubjectId == 0)
+            {
+                // CREATE operation
+                await SubjectService.CreateSubjectAsync(CurrentDto);
+            }
+            else
+            {
+                // UPDATE operation: Need to map CurrentDto to UpdateSubjectDTO
+                var updateDto = new UpdateSubjectDTO
+                {
+                    Id = CurrentSubjectId,
+                    SubjectName = CurrentDto.SubjectName,
+                    TeacherId = CurrentDto.TeacherId, // Convert int? to int
+                    RegistrationCode = CurrentDto.RegistrationCode // Ensure RegistrationCode is included
+                };
+
+                await SubjectService.UpdateSubjectAsync(updateDto);
+            }
+
+            CloseModal();
+            await LoadSubjectsAsync(); // Refresh list
+        }
+        catch (InvalidOperationException ex)
+        {
+            ModalErrorMessage = $"Operation failed: {ex.Message}";
+        }
+        catch (HttpRequestException ex)
+        {
+            ModalErrorMessage = $"API Error: {ex.Message}";
+        }
+    }
+
+    private async Task DeleteSubject(int id)
+    {
+        // ... (existing implementation) ...
+        if (!await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this subject? This action cannot be undone."))
+        {
+            return;
+        }
+
+        ErrorMessage = string.Empty;
+        try
+        {
+            await SubjectService.DeleteSubjectAsync(id);
+            await LoadSubjectsAsync(); // Refresh list
+        }
+        catch (HttpRequestException ex)
+        {
+            ErrorMessage = $"Deletion failed: {ex.Message}. If the subject is enrolled by students, you may need to drop them first.";
+        }
+    }
+
+    // --- Modal Control ---
+
+    private void OpenCreateForm()
+    {
+        CurrentSubjectId = 0;
+        CurrentDto = new CreateSubjectDto();
+        ModalErrorMessage = string.Empty;
+        ShowModal = true;
+    }
+
+    private void OpenEditForm(SubjectDTO subject)
+    {
+        CurrentSubjectId = subject.Id;
+        
+        // Map fields for editing
+        CurrentDto = new CreateSubjectDto
+        {
+            RegistrationCode = subject.RegistrationCode, 
+            SubjectName = subject.SubjectName,
+            TeacherId = subject.TeacherId
+        };
+        
+        ModalErrorMessage = string.Empty;
+        ShowModal = true;
+    }
+
+    private void CloseModal()
+    {
+        ShowModal = false;
+        CurrentSubjectId = 0;
+        CurrentDto = new CreateSubjectDto();
+        ModalErrorMessage = string.Empty;
+    }
+}
