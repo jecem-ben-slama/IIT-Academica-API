@@ -5,6 +5,7 @@
 @using TableSkeleton
 @using UserManagementView
 @using SubjectsView
+@using NotificationsView
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthStateProvider
 @inject UserService UserService
@@ -30,6 +31,7 @@ else
         }
         else if (SelectedRole == "Notifications")
         {
+             <NotificationsView />
         }
         else
         {

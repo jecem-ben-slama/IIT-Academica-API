@@ -1,0 +1,337 @@
+@namespace NotificationsView
+@using IIT_Academica_Front.Models
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Forms
+@inject NotificationService NotificationService
+@inject IJSRuntime JSRuntime
+
+
+<h3><span class="oi oi-bell" aria-hidden="true"></span> Notification Management</h3>
+
+<p class="text-danger">@ErrorMessage</p>
+
+@if (IsLoading)
+{
+    <p><em>Loading notifications...</em></p>
+}
+else if (Notifications == null )
+{
+    <p class="text-info">No notifications found.</p>
+    <button class="btn btn-primary mb-3" @onclick="() => OpenCreateForm()">
+        <span class="oi oi-plus" aria-hidden="true"></span> Add New Notification
+    </button>
+}
+else
+{
+    @* --- Admin: Add New Button --- *@
+    <button class="btn btn-primary mb-3" @onclick="() => OpenCreateForm()">
+        <span class="oi oi-plus" aria-hidden="true"></span> Add New Notification
+    </button>
+
+    @* --- Notifications Table --- *@
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Content Snippet</th>
+                    <th>Image</th>
+                    <th>Attachment</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var notification in Notifications)
+                {
+                    <tr>
+                        <td>@notification.Id</td>
+                        <td><strong>@notification.Title</strong></td>
+                        <td>@(notification.Content.Length > 50 ? notification.Content.Substring(0, 50) + "..." : notification.Content)</td>
+                        <td>@(string.IsNullOrEmpty(notification.ImageUrl) ? "No" : "Yes")</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(notification.FileUrl))
+                            {
+                                <button class="btn btn-sm btn-link p-0" @onclick="() => DownloadFile(notification.Id)">
+                                    <span class="oi oi-data-transfer-download" aria-hidden="true"></span> Download
+                                </button>
+                            }
+                            else
+                            {
+                                <span>No</span>
+                            }
+                        </td>
+                        <td>@notification.PostedDate.ToShortDateString()</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" @onclick="() => OpenEditForm(notification)">Edit</button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteNotification(notification.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@* --- Create/Update Modal Forms --- *@
+@if (ShowModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(CurrentNotificationId == 0 ? "Create New Notification" : "Edit Notification Content")</h5>
+                    <button type="button" class="close" @onclick="CloseModal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@CurrentDto" OnValidSubmit="@HandleSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="form-group mb-3">
+                            <label>Title:</label>
+                            <InputText @bind-Value="CurrentDto.Title" class="form-control" />
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label>Content:</label>
+                            <InputTextArea @bind-Value="CurrentDto.Content" class="form-control" rows="5" />
+                        </div>
+
+                        @* Only show file inputs on CREATE form, as the service requires separate methods for file updates (not implemented here) *@
+                        @if (CurrentNotificationId == 0)
+                        {
+                            <hr />
+                            <h5>File Attachments (Optional)</h5>
+                            
+                            <div class="form-group mb-3">
+                                <label>Image File (JPEG/PNG):</label>
+                                <InputFile OnChange="@HandleImageFileSelection" />
+                                @if (ImageFile != null) { <small class="form-text text-muted">Selected: @ImageFile.Name</small> }
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label>Attached File (PDF/DOCX):</label>
+                                <InputFile OnChange="@HandleAttachedFileSelection" />
+                                @if (AttachedFile != null) { <small class="form-text text-muted">Selected: @AttachedFile.Name</small> }
+                            </div>
+                            <hr />
+                        }
+
+                        <p class="text-danger mt-2">@ModalErrorMessage</p>
+                        
+                        <div class="modal-footer mt-4">
+                            <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">@(CurrentNotificationId == 0 ? "Create" : "Save Changes")</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // --- State ---
+    private List<NotificationDto>? Notifications;
+    private string ErrorMessage = string.Empty;
+    private string ModalErrorMessage = string.Empty;
+    private bool IsLoading = true;
+
+    // --- Modal State ---
+    private bool ShowModal = false;
+    private int CurrentNotificationId = 0;
+    
+    private CreateNotificationDto CurrentDto = new CreateNotificationDto();
+    
+    // File State for creation
+    private IBrowserFile? ImageFile;
+    private IBrowserFile? AttachedFile;
+
+    // --- Initialization ---
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadNotificationsAsync();
+    }
+
+    private async Task LoadNotificationsAsync()
+    {
+        IsLoading = true;
+        ErrorMessage = string.Empty;
+        try
+        {
+            // Note: Using GetNotificationFeedAsync as the general endpoint
+            Notifications = await NotificationService.GetNotificationFeedAsync();
+        }
+        catch (HttpRequestException ex)
+        {
+            ErrorMessage = $"Error loading notifications: {ex.Message}";
+            Notifications = null;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    // --- File Handling ---
+
+    private void HandleImageFileSelection(InputFileChangeEventArgs e)
+    {
+        // Limit image file size to 5MB (example constraint)
+        ImageFile = e.File.Size <= 5 * 1024 * 1024 ? e.File : null;
+        if (ImageFile == null)
+        {
+            ModalErrorMessage = "Image file size exceeds 5MB limit.";
+        }
+        else
+        {
+            ModalErrorMessage = string.Empty;
+        }
+    }
+
+    private void HandleAttachedFileSelection(InputFileChangeEventArgs e)
+    {
+        // Limit attached file size to 10MB (example constraint)
+        AttachedFile = e.File.Size <= 10 * 1024 * 1024 ? e.File : null;
+        if (AttachedFile == null)
+        {
+            ModalErrorMessage = "Attached file size exceeds 10MB limit.";
+        }
+        else
+        {
+            ModalErrorMessage = string.Empty;
+        }
+    }
+
+    // --- CRUD Operations ---
+
+    private async Task HandleSubmit()
+    {
+        ModalErrorMessage = string.Empty;
+        
+        try
+        {
+            if (CurrentNotificationId == 0)
+            {
+                // CREATE operation (handles multipart/form-data)
+                await NotificationService.CreateNotificationAsync(CurrentDto, ImageFile, AttachedFile);
+            }
+            else
+            {
+                // UPDATE operation (only text content, no file update in this method)
+                await NotificationService.UpdateNotificationAsync(CurrentNotificationId, CurrentDto);
+            }
+
+            CloseModal();
+            await LoadNotificationsAsync(); // Refresh list
+        }
+        catch (HttpRequestException ex)
+        {
+            ModalErrorMessage = $"API Error: {ex.Message}";
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Catch DTO deserialization errors, etc.
+            ModalErrorMessage = $"Operation Failed: {ex.Message}";
+        }
+    }
+
+    private async Task DeleteNotification(int id)
+    {
+        if (!await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this notification?"))
+        {
+            return;
+        }
+
+        ErrorMessage = string.Empty;
+        try
+        {
+            await NotificationService.DeleteNotificationAsync(id);
+            await LoadNotificationsAsync(); // Refresh list
+        }
+        catch (HttpRequestException ex)
+        {
+            ErrorMessage = $"Deletion failed: {ex.Message}.";
+        }
+    }
+
+    private async Task DownloadFile(int notificationId)
+    {
+        try
+        {
+            var response = await NotificationService.DownloadNotificationFileAsync(notificationId);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Read content details
+                var fileName = response.Content.Headers.ContentDisposition?.FileNameStar ?? response.Content.Headers.ContentDisposition?.FileName ?? $"notification_attachment_{notificationId}";
+                var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+                var fileStream = await response.Content.ReadAsStreamAsync();
+                
+                // Use JS interop to trigger the download in the browser
+                using var streamRef = new DotNetStreamReference(stream: fileStream);
+                await JSRuntime.InvokeVoidAsync("BlazorDownloadFile", fileName, streamRef, contentType);
+
+            }
+            else
+            {
+                ErrorMessage = $"Download failed: API returned status code {(int)response.StatusCode}.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Download error: {ex.Message}";
+        }
+    }
+
+    // --- Modal Control ---
+
+    private void OpenCreateForm()
+    {
+        CurrentNotificationId = 0;
+        CurrentDto = new CreateNotificationDto();
+        ImageFile = null;
+        AttachedFile = null;
+        ModalErrorMessage = string.Empty;
+        ShowModal = true;
+    }
+
+    private async Task OpenEditForm(NotificationDto notification)
+    {
+        // Fetch full details if needed, but for now, use table data
+        CurrentNotificationId = notification.Id;
+        
+        // Populate DTO with current text content
+        // Note: We use the DTO for Update, assuming the API only updates text fields
+        CurrentDto = new CreateNotificationDto
+        {
+            Title = notification.Title,
+            Content = notification.Content
+            // Files are NOT handled in the standard update form
+        };
+        
+        // Reset file state for the form (since we don't upload on edit)
+        ImageFile = null;
+        AttachedFile = null;
+        ModalErrorMessage = string.Empty;
+        ShowModal = true;
+        
+        // Since we are fetching data here, ensure it's loaded before modal appears
+        await Task.CompletedTask; 
+    }
+
+    private void CloseModal()
+    {
+        ShowModal = false;
+        CurrentNotificationId = 0;
+        CurrentDto = new CreateNotificationDto();
+        ImageFile = null;
+        AttachedFile = null;
+        ModalErrorMessage = string.Empty;
+    }
+}
