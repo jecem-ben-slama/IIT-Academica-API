@@ -37,7 +37,7 @@ public class NotificationsController : ControllerBase
     // ADMIN ENDPOINTS (CRUD & Upload)
     // ===============================================
 
-    // C R E A T E (POST) - /api/Notifications
+    // C R E A T E (POST) - /api/Notifications/create
     [HttpPost("create")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<NotificationDto>> PostNotification(
@@ -132,20 +132,73 @@ public class NotificationsController : ControllerBase
     }
 
     // U P D A T E (PUT) - /api/Notifications/{id}
-    // Note: For simplicity, this update does NOT handle re-uploading files. 
-    // It assumes a separate DELETE/POST logic or a complex PATCH.
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> UpdateNotification(int id, [FromBody] CreateNotificationDto dto)
+    public async Task<IActionResult> UpdateNotification(
+        int id, 
+        [FromForm] CreateNotificationDto dto, // Use [FromForm] to accept files
+        IFormFile? imageFile,
+        IFormFile? attachedFile)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
+        if (!TryGetUserId(out int adminId)) return Unauthorized(); // Optional: Check if adminId is needed for logging/auditing
 
         var entity = await Repository.GetByIdAsync(id);
         if (entity == null) return NotFound();
 
+        string? newImageUrl = entity.ImageUrl;
+        string? newFileUrl = entity.FileUrl;
+
+        try
+        {
+            // 1. Handle Image File Re-upload (Displayable)
+            if (imageFile != null && imageFile.Length > 0)
+            {
+                // Delete old image if it exists
+                if (!string.IsNullOrEmpty(entity.ImageUrl))
+                    await _fileStorageService.DeleteFileAsync(entity.ImageUrl);
+                
+                // Upload new image
+                newImageUrl = await _fileStorageService.SaveFileAsync(
+                    imageFile,
+                    NotificationFolderId,
+                    dto.Title + "_Image");
+            }
+            // NOTE: If imageFile is null, the existing ImageUrl is kept.
+
+            // 2. Handle Attached File Re-upload (Downloadable)
+            if (attachedFile != null && attachedFile.Length > 0)
+            {
+                // Delete old file if it exists
+                if (!string.IsNullOrEmpty(entity.FileUrl))
+                    await _fileStorageService.DeleteFileAsync(entity.FileUrl);
+
+                // Upload new file
+                newFileUrl = await _fileStorageService.SaveFileAsync(
+                    attachedFile,
+                    NotificationFolderId,
+                    dto.Title + "_Attachment");
+            }
+            // NOTE: If attachedFile is null, the existing FileUrl is kept.
+        }
+        catch (Exception ex)
+        {
+            // Clean up any files saved during this update attempt
+            // We only clean up if the URL is different from the original entity's URL, 
+            // indicating a new file was successfully uploaded before the failure.
+            if (newImageUrl != entity.ImageUrl && !string.IsNullOrEmpty(newImageUrl))
+                await _fileStorageService.DeleteFileAsync(newImageUrl);
+            if (newFileUrl != entity.FileUrl && !string.IsNullOrEmpty(newFileUrl))
+                await _fileStorageService.DeleteFileAsync(newFileUrl);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, $"File re-upload failed: {ex.Message}");
+        }
+
+        // Update entity properties
         entity.Title = dto.Title;
         entity.Content = dto.Content;
-        // ImageUrl and FileUrl are kept as-is unless a file is explicitly re-uploaded
+        entity.ImageUrl = newImageUrl; // Assign potentially new/updated URL
+        entity.FileUrl = newFileUrl;   // Assign potentially new/updated URL
 
         await Repository.UpdateAsync(entity);
         await _unitOfWork.CompleteAsync();
@@ -181,8 +234,7 @@ public class NotificationsController : ControllerBase
 
     // R E A D A L L (GET) - /api/Notifications/feed
     [HttpGet("feed")]
-    [Authorize(Roles = "Admin,Student")]
-    [Authorize(Roles = "Admin,Student")]
+    [Authorize(Roles = "Admin,Student,Teacher")] // Updated to include Teacher
     public async Task<ActionResult<IEnumerable<NotificationDto>>> GetNotificationFeed()
     {
         var entities = await Repository.GetAllAsync();
@@ -201,20 +253,22 @@ public class NotificationsController : ControllerBase
         return Ok(dtos);
     }
 
-    // R E A D / D O W N L O A D (GET) - /api/Notifications/{id}/download
+    // R E A D / D O W N L O A D FILE (GET) - /api/Notifications/{id}/download
     [HttpGet("{id}/download")]
     [Authorize(Roles = "Student,Teacher,Admin")]
     public async Task<IActionResult> DownloadNotificationFile(int id)
     {
         var notification = await Repository.GetByIdAsync(id);
 
+        // Check for attached file (FileUrl)
         if (notification == null || string.IsNullOrEmpty(notification.FileUrl))
         {
             return NotFound("Notification or attached file not found.");
         }
 
         string relativePath = notification.FileUrl;
-        string absolutePath = Path.Combine(Directory.GetCurrentDirectory(), relativePath);
+        // IMPORTANT: Assuming relativePath is already correctly stored (e.g., /Uploads/Subject-9999/file.pdf)
+        string absolutePath = Path.Combine(Directory.GetCurrentDirectory(), relativePath.TrimStart('/')); 
 
         if (!System.IO.File.Exists(absolutePath))
         {
@@ -231,10 +285,55 @@ public class NotificationsController : ControllerBase
             contentType = "application/zip";
         else if (fileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase))
             contentType = "image/jpeg";
+        else if (fileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+            contentType = "image/png"; // Added common image type for robustness
+        else if (fileName.EndsWith(".docx", StringComparison.OrdinalIgnoreCase))
+            contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 
         var fileStream = new FileStream(absolutePath, FileMode.Open, FileAccess.Read);
 
+        return File(fileStream, contentType, fileName);
+    }
+    
+    
+    // 🆕 N E W : R E A D / D O W N L O A D IMAGE (GET) - /api/Notifications/{id}/downloadimage
+    [HttpGet("{id}/downloadimage")]
+    [Authorize(Roles = "Student,Teacher,Admin")]
+    public async Task<IActionResult> DownloadNotificationImage(int id)
+    {
+        var notification = await Repository.GetByIdAsync(id);
+
+        // Check for attached image (ImageUrl)
+        if (notification == null || string.IsNullOrEmpty(notification.ImageUrl))
+        {
+            return NotFound("Notification or attached image not found.");
+        }
+
+        string relativePath = notification.ImageUrl;
+        // IMPORTANT: Assuming relativePath is already correctly stored (e.g., /Uploads/Subject-9999/image.png)
+        string absolutePath = Path.Combine(Directory.GetCurrentDirectory(), relativePath.TrimStart('/'));
+
+        if (!System.IO.File.Exists(absolutePath))
+        {
+            return NotFound("The image file could not be located on the server.");
+        }
+
+        string contentType = "application/octet-stream";
+        string fileName = Path.GetFileName(relativePath);
+
+        // Basic MIME type mapping for images
+        if (fileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase))
+            contentType = "image/jpeg";
+        else if (fileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+            contentType = "image/png";
+        else if (fileName.EndsWith(".gif", StringComparison.OrdinalIgnoreCase))
+            contentType = "image/gif";
+
+
+        var fileStream = new FileStream(absolutePath, FileMode.Open, FileAccess.Read);
+
+        // Returns the file stream, forcing the browser to download it.
         return File(fileStream, contentType, fileName);
     }
 }

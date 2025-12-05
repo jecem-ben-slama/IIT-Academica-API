@@ -25,22 +25,19 @@ builder.Services.AddCors(options =>
                   .AllowAnyMethod(); // Essential for allowing POST/GET/DELETE requests
         });
 });
-// 🛑 Note: The previous definition was: options.AddPolicy("AllowSpecificOrigin", policy=>policy.AllowAnyOrigin().AllowAnyOrigin().AllowAnyHeader().AllowAnyHeader());
-// This was redundant and the name "AllowAll" was not defined in the services.
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString));
 
-// FIX 1 & 2: Explicitly specify IdentityRole<int> for the Role type
+// Identity Configuration (using IdentityRole<int> for Role type)
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>(options =>
 {
-    options.Password.RequireDigit = true;
-    options.Password.RequiredLength = 6;
-    options.Password.RequireNonAlphanumeric = false;
-    options.SignIn.RequireConfirmedAccount = false;
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.SignIn.RequireConfirmedAccount = false;
 })
-// FIX 3: AddEntityFrameworkStores must also use the explicit Role type
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
@@ -55,25 +52,25 @@ builder.Services.AddScoped<ICourseMaterialRepository, CourseMaterialRepository>(
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
-// JWT Bearer Configuration (No change needed here)
+// JWT Bearer Configuration
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
 
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-    };
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
 });
 
 builder.Services.AddControllers();
@@ -81,14 +78,17 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// 1. Static Files (Should be early)
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(builder.Environment.ContentRootPath, "Uploads")),
-    RequestPath = "/Uploads"
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "Uploads")),
+    RequestPath = "/Uploads"
 });
 
-// Database Seeding and Role Initialization
+
+// Database Seeding and Role Initialization (Moved to run once during startup)
 using (var scope = app.Services.CreateScope())
 {
     // ... Database seeding logic (unchanged)
@@ -139,19 +139,20 @@ using (var scope = app.Services.CreateScope())
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
 
-// 🛑 CORS FIX 2: Apply the CORS policy here, BEFORE UseAuthentication and UseAuthorization!
-app.UseCors(MyAllowDevelopmentOrigins); // Using the correctly defined policy name
+app.UseCors(MyAllowDevelopmentOrigins); 
 
+// 3. Security Middleware
 app.UseAuthentication();
 app.UseAuthorization();
-// app.UseCors("AllowAll"); // 🛑 REMOVE THIS INCORRECT LINE
 
+
+// 4. Controller Mapping
 app.MapControllers();
 
 app.Run();

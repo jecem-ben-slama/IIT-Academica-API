@@ -4,90 +4,111 @@
 @inject NavigationManager NavigationManager
 
 <div class="login-layout">
- 
+ 
 
-    <!-- Right form area -->
-    <div class="login-right">
-        <div class="login-card">
+        <div class="login-right">
+        <div class="login-card">
 
-            <p class="text-muted small-title">Please enter your details</p>
-            <h2 class="welcome-title">Welcome back</h2>
+            <p class="text-muted small-title">Please enter your details</p>
+            <h2 class="welcome-title">Welcome back</h2>
 
-            <EditForm Model="@loginDto" OnValidSubmit="HandleLogin">
-                <DataAnnotationsValidator />
+            <EditForm Model="@loginDto" OnValidSubmit="HandleLogin">
+                <DataAnnotationsValidator />
 
-                <div class="form-group mt-4">
-                    <label>Email address</label>
-                    <InputText class="form-control modern-input" @bind-Value="loginDto.Email" />
-                </div>
+                <div class="form-group mt-4">
+                    <label>Email address</label>
+                    <InputText class="form-control modern-input" @bind-Value="loginDto.Email" />
+                </div>
 
-                <div class="form-group mt-3">
-                    <label>Password</label>
-                    <InputText type="password" class="form-control modern-input" @bind-Value="loginDto.Password" />
-                </div>
+                <div class="form-group mt-3">
+                    <label>Password</label>
+                    
+                    @* --- Password Input Group with Toggle --- *@
+                    <div class="input-group">
+                        <InputText type="@(showPassword ? "text" : "password")" 
+                            class="form-control modern-input" 
+                            @bind-Value="loginDto.Password" />
+                        
+                        <button type="button" class="btn btn-outline-secondary" @onclick="TogglePasswordVisibility">
+                            @* Change icon based on state (using standard Open Iconic classes) *@
+                            <span class="@(showPassword ? "oi oi-eye" : "oi oi-lock-unlocked")" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                    @* --- End Password Input Group --- *@
 
-               
-                @if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    <div class="alert alert-danger mt-3 text-center">
-                        @errorMessage
-                    </div>
-                }
+                </div>
 
-                <button type="submit" class="btn primary-btn w-100 mt-4" disabled="@isBusy">
-                    @if (isBusy)
-                    {
-                        <span class="spinner-border spinner-border-sm me-2"></span>
-                    }
-                    Loginn
-                </button>
+               
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger mt-3 text-center">
+                        @errorMessage
+                    </div>
+                }
 
-               
-             
+                <button type="submit" class="btn primary-btn w-100 mt-4" disabled="@isBusy">
+                    @if (isBusy)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    Loginn
+                </button>
 
-            </EditForm>
-        </div>
-    </div>
+               
+             
+
+            </EditForm>
+        </div>
+    </div>
 </div>
 
 @code {
-    private LoginDto loginDto = new();
-    private string? errorMessage;
-    private bool isBusy = false;
-    private bool rememberMe = false;
+    private LoginDto loginDto = new();
+    private string? errorMessage;
+    private bool isBusy = false;
+    private bool rememberMe = false;
+    
+    // 🆕 New state variable for password visibility
+    private bool showPassword = false;
 
-    private async Task HandleLogin()
+    // 🆕 New method to toggle the visibility state
+    private void TogglePasswordVisibility()
     {
-        errorMessage = null;
-        isBusy = true;
-
-        try
-        {
-            var auth = await AuthService.Login(loginDto.Email, loginDto.Password);
-            if (auth.IsSuccess)
-            {
-                NavigationManager.NavigateTo(
-                    auth.Role switch {
-                        
-                        "Student" => "/student",
-                        "Admin" => "/admin",
-                        "Teacher" => "/teacher",
-                        
-                    },
-                    forceLoad: true,
-                    replace: true
-                );
-            }
-            else
-                errorMessage = auth.Errors?.FirstOrDefault() ?? auth.Message;
-        }
-        catch (Exception ex)
-        {
-            errorMessage = ex.Message;
-        }
-        finally
-        {
-            isBusy = false;
-        }
+        showPassword = !showPassword;
     }
+
+    private async Task HandleLogin()
+    {
+        errorMessage = null;
+        isBusy = true;
+
+        try
+        {
+            var auth = await AuthService.Login(loginDto.Email, loginDto.Password);
+            if (auth.IsSuccess)
+            {
+                NavigationManager.NavigateTo(
+                    auth.Role switch {
+                        
+                        "Student" => "/student",
+                        "Admin" => "/admin",
+                        "Teacher" => "/teacher",
+                        
+                    },
+                    forceLoad: true,
+                    replace: true
+                );
+            }
+            else
+                errorMessage = auth.Errors?.FirstOrDefault() ?? auth.Message;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
 }

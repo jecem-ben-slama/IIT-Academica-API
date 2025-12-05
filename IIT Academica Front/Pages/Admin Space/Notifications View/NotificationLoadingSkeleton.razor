@@ -1,0 +1,36 @@
+@namespace NotificationLoadingSkeleton
+@if (true)
+{
+    <div class="mt-4">
+        <div class="skeleton-box skeleton-text" style="width: 150px; height: 38px; margin-bottom: 20px;"></div>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-bordered">
+                <thead class="thead-light">
+                    <tr>
+                        <th style="width: 5%;">ID</th>
+                        <th style="width: 20%;">Title</th>
+                        <th style="width: 35%;">Content Snippet</th>
+                        <th style="width: 5%;">Image</th>
+                        <th style="width: 10%;">Attachment</th>
+                        <th style="width: 10%;">Date</th>
+                        <th style="width: 15%;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < 5; i++)
+                    {
+                        <tr>
+                            <td><div class="skeleton-box skeleton-text" style="width: 80%;"></div></td>
+                            <td><div class="skeleton-box skeleton-text" style="width: 90%;"></div></td>
+                            <td><div class="skeleton-box skeleton-text" style="width: 95%;"></div></td>
+                            <td><div class="skeleton-box skeleton-text" style="width: 80%;"></div></td>
+                            <td><div class="skeleton-box skeleton-text" style="width: 70%;"></div></td>
+                            <td><div class="skeleton-box skeleton-text" style="width: 70%;"></div></td>
+                            <td><div class="d-flex"><div class="skeleton-box skeleton-text me-2" style="width: 40px;"></div> <div class="skeleton-box skeleton-text" style="width: 40px;"></div></div></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

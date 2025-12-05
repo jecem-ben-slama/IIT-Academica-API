@@ -5,6 +5,7 @@ using IIT_Academica_Front.Models; // Assumed location for DTOs
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Components.Forms; // For IBrowserFile
+using System;
 
 namespace IIT_Academica_Front.Services
 {
@@ -40,7 +41,7 @@ namespace IIT_Academica_Front.Services
         // ===============================================
 
         /// <summary>
-        /// Retrieves the notification feed (accessible by Admin/Student).
+        /// Retrieves the notification feed (accessible by Admin/Student/Teacher).
         /// </summary>
         public async Task<List<NotificationDto>?> GetNotificationFeedAsync()
         {
@@ -63,7 +64,7 @@ namespace IIT_Academica_Front.Services
         }
 
         /// <summary>
-        /// Retrieves a single notification by ID (Admin/Student access).
+        /// Retrieves a single notification by ID (Admin/Student/Teacher access).
         /// </summary>
         public async Task<NotificationDto?> GetNotificationByIdAsync(int id)
         {
@@ -112,7 +113,7 @@ namespace IIT_Academica_Front.Services
             {
                 var fileContent = new StreamContent(attachedFile.OpenReadStream(attachedFile.Size));
                 fileContent.Headers.ContentType = new MediaTypeHeaderValue(attachedFile.ContentType);
-                 // The name must match the parameter name in the controller: "attachedFile"
+                   // The name must match the parameter name in the controller: "attachedFile"
                 content.Add(fileContent, "attachedFile", attachedFile.Name);
             }
 
@@ -131,25 +132,57 @@ namespace IIT_Academica_Front.Services
         // ===============================================
         // UPDATE OPERATION (Admin)
         // ===============================================
-        
+
         /// <summary>
-        /// Updates a notification's core text content (excluding files, per controller design).
+        /// Updates a notification, handling file re-uploads via multipart/form-data.
         /// </summary>
-        public async Task UpdateNotificationAsync(int id, CreateNotificationDto dto)
+        public async Task UpdateNotificationAsync(
+            int id, 
+            CreateNotificationDto dto, 
+            IBrowserFile? imageFile = null, // Optional new image file
+            IBrowserFile? attachedFile = null) // Optional new attached file
         {
             await SetAuthorizationHeader();
 
-            // Note: The controller takes CreateNotificationDto for simplicity, 
-            // but a separate UpdateNotificationDto might be cleaner.
-            var response = await _httpClient.PutAsJsonAsync($"api/Notifications/{id}", dto);
+            // 1. Prepare the MultipartFormDataContent
+            using var content = new MultipartFormDataContent();
+
+            // 2. Add DTO properties as form fields
+            content.Add(new StringContent(dto.Title), nameof(dto.Title));
+            content.Add(new StringContent(dto.Content), nameof(dto.Content));
+
+            // 3. Add IBrowserFile contents (Image)
+            if (imageFile != null)
+            {
+                // Use a 50MB limit (or your desired max file size) for the stream
+                const long maxFileSize = 1024 * 1024 * 50; 
+                var imageContent = new StreamContent(imageFile.OpenReadStream(maxFileSize));
+                imageContent.Headers.ContentType = new MediaTypeHeaderValue(imageFile.ContentType);
+                // Field name must match the controller parameter: "imageFile"
+                content.Add(imageContent, "imageFile", imageFile.Name);
+            }
+
+            // 4. Add IBrowserFile contents (Attached File)
+            if (attachedFile != null)
+            {
+                // Use a 50MB limit (or your desired max file size) for the stream
+                const long maxFileSize = 1024 * 1024 * 50; 
+                var fileContent = new StreamContent(attachedFile.OpenReadStream(maxFileSize));
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue(attachedFile.ContentType);
+                // Field name must match the controller parameter: "attachedFile"
+                content.Add(fileContent, "attachedFile", attachedFile.Name);
+            }
+
+            // 5. Send the PUT request with multipart content
+            var response = await _httpClient.PutAsync($"api/Notifications/{id}", content);
 
             if (response.IsSuccessStatusCode)
             {
                 return; // 204 No Content is expected
             }
             
-            var content = await response.Content.ReadAsStringAsync();
-            throw new HttpRequestException($"Notification update failed. Status: {(int)response.StatusCode}. Details: {content}");
+            var errorContent = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException($"Notification update failed. Status: {(int)response.StatusCode}. Details: {errorContent}");
         }
 
         // ===============================================
@@ -175,20 +208,28 @@ namespace IIT_Academica_Front.Services
         }
         
         // ===============================================
-        // DOWNLOAD OPERATION (All Users)
+        // DOWNLOAD OPERATIONS (All Users)
         // ===============================================
 
         /// <summary>
-        /// Initiates file download for an attached notification file.
+        /// Initiates file download for an attached notification file (FileUrl).
+        /// API Endpoint: /api/Notifications/{id}/download
         /// </summary>
         public async Task<HttpResponseMessage> DownloadNotificationFileAsync(int id)
         {
             await SetAuthorizationHeader();
 
-            // Ensure HttpClient does not automatically dispose of the stream
             return await _httpClient.GetAsync($"api/Notifications/{id}/download", HttpCompletionOption.ResponseHeadersRead);
             
-            // The calling component will need to handle the stream response and trigger the download via JS interop.
+        }
+
+        
+        public async Task<HttpResponseMessage> DownloadNotificationImageAsync(int id)
+        {
+            await SetAuthorizationHeader();
+
+            return await _httpClient.GetAsync($"api/Notifications/{id}/downloadimage", HttpCompletionOption.ResponseHeadersRead);
+            
         }
     }
 }
