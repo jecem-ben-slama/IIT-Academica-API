@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @attribute [Authorize(Roles = "Admin")]
 @layout AdminLayout
+@using System.Security.Claims
 @using TableSkeleton
 @using UserManagementView
 @using SubjectsView
@@ -10,7 +11,6 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject UserService UserService
 
-@* Capture the Layout context (required for Cascading Parameter pattern) *@
 @if (AdminLayoutContext == null)
 {
    <TableSkeleton />
@@ -62,14 +62,24 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
+      
 
         if (!user.Identity?.IsAuthenticated ?? false)
         {
             NavigationManager.NavigateTo("/", true, replace: true);
             return;
         }
+        
+        if (!user.IsInRole("Admin"))
+    {
+        NavigationManager.NavigateTo("/forbidden", true, replace: true);
+        return;
+    }
+
+       
 
         SelectedRole = string.Empty;
         await LoadUsersAsync();

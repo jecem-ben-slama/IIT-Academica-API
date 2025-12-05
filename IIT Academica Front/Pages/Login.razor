@@ -87,6 +87,7 @@
             var auth = await AuthService.Login(loginDto.Email, loginDto.Password);
             if (auth.IsSuccess)
             {
+    
                 NavigationManager.NavigateTo(
                     auth.Role switch {
                         

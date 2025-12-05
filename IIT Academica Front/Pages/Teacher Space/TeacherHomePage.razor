@@ -1,25 +1,79 @@
 @page "/teacher"
-@inject NavigationManager NavigationManager 
+@attribute [Authorize(Roles = "Teacher")]
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager NavigationManager
 @inject AuthService AuthService
+@inject AuthenticationStateProvider AuthStateProvider
 
-<h3>Admin Home Page</h3>
-<hr/>
 
-<p>Welcome to the teacher area.</p>
 
-<button class="btn btn-danger" @onclick="HandleLogout">
-    Log Out
-</button>
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header bg-success text-white">
+            <h3 class="mb-0">Teacher Dashboard</h3>
+        </div>
+        <div class="card-body">
+            <p class="lead">Welcome to the dedicated teacher area of IIT Academica. Here you can manage your courses, view student submissions, and update grades.</p>
+            
+            <div class="row mt-4">
+                <div class="col-md-4 mb-3">
+                    <a href="/teacher/courses" class="btn btn-outline-primary w-100 p-3">
+                        <i class="bi bi-book-fill me-2"></i> Manage My Courses
+                    </a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="/teacher/students" class="btn btn-outline-info w-100 p-3">
+                        <i class="bi bi-people-fill me-2"></i> View Students
+                    </a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="/teacher/grades" class="btn btn-outline-warning w-100 p-3">
+                        <i class="bi bi-graph-up me-2"></i> Update Grades
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer d-flex justify-content-end">
+            <button class="btn btn-danger" @onclick="HandleLogout">
+                <i class="bi bi-box-arrow-right me-2"></i> Log Out
+            </button>
+        </div>
+    </div>
+</div>
 
 @code {
+    // We are using the [Authorize] attribute which is the preferred way to restrict access
+    // This component will only render if the user is authenticated and authorized (if roles were specified 
+    // in the attribute, e.g., [Authorize(Roles = "Teacher")]).
     
-    // Method to handle the logout process
+    // For this demonstration, I will include the role check in OnInitializedAsync 
+    // to ensure redirection if the Authorization Policy doesn't handle it perfectly.
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity?.IsAuthenticated ?? false)
+        {
+            NavigationManager.NavigateTo("/", true, replace: true);
+            return;
+        }
+        // if authenticated but not tight role redirect to "/forbidden"
+        else if(!user.IsInRole("Teacher"))
+        {
+            NavigationManager.NavigateTo("/forbidden", true, replace: true);
+            return;
+        }
+    }
+
+
     private async Task HandleLogout()
     {
         // 1. Call the AuthService to clear the token and update authentication state
         await AuthService.Logout();
 
-      
-        NavigationManager.NavigateTo("/", true,replace:true);
+        // 2. Redirect to the home page (with a full page reload to clear state)
+        NavigationManager.NavigateTo("/", true, replace: true);
     }
 }
