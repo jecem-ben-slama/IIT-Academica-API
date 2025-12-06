@@ -115,6 +115,62 @@ namespace IIT_Academica_Front.Services
         /// <summary>
         /// Retrieves a single course material by ID (Teacher/Student access).
         /// </summary>
+        /// 
+       public async Task<CourseMaterialDto> UpdateMaterialAsync(
+    UpdateCourseMaterialDto
+     materialToUpdate, 
+    IBrowserFile? file = null)
+{
+    HttpResponseMessage response;
+
+    if (file != null)
+    {
+        // 1. Case: File is provided (Use multipart/form-data)
+        using var content = new MultipartFormDataContent();
+
+        // Add the DTO fields as StringContent
+        content.Add(new StringContent(materialToUpdate.Id.ToString()), "Id");
+        content.Add(new StringContent(materialToUpdate.Title), "Title");
+        content.Add(new StringContent(materialToUpdate.Description), "Description");
+
+        // Add the file as StreamContent
+        var fileStreamContent = new StreamContent(file.OpenReadStream(file.Size));
+        fileStreamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+        
+        // Add the file to the content with the name 'file' (must match IFormFile parameter name in controller)
+        content.Add(fileStreamContent, "file", file.Name);
+
+        // Send the PUT request
+        response = await _httpClient.PutAsync($"api/CourseMaterials/update/{materialToUpdate.Id}", content);
+    }
+    else
+    {
+        // 2. Case: Only metadata is changing (Use standard JSON PUT, but API is now expecting form data)
+        // To handle this, we still must send form data, even if the file part is empty. 
+        // We create a minimal MultipartFormDataContent with just the metadata.
+        using var content = new MultipartFormDataContent();
+
+        // Add the DTO fields as StringContent
+        content.Add(new StringContent(materialToUpdate.Id.ToString()), "Id");
+        content.Add(new StringContent(materialToUpdate.Title), "Title");
+        content.Add(new StringContent(materialToUpdate.Description), "Description");
+
+        response = await _httpClient.PutAsync($"api/CourseMaterials/update/{materialToUpdate.Id}", content);
+    }
+
+    // Throw an exception for bad status codes
+    response.EnsureSuccessStatusCode();
+
+    // Deserialize and return the updated material DTO
+    var updatedMaterial = await response.Content.ReadFromJsonAsync<CourseMaterialDto>();
+    
+    if (updatedMaterial == null)
+    {
+        throw new HttpRequestException("Failed to deserialize the updated course material.");
+    }
+
+    return updatedMaterial;
+}
         public async Task<CourseMaterialDto?> GetMaterialByIdAsync(int id)
         {
             await SetAuthorizationHeader();

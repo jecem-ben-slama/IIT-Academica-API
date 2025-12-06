@@ -1,108 +1,64 @@
 @inherits LayoutComponentBase
-@inject NavigationManager NavigationManager
-@inject AuthService AuthService
 
-@* Create a Cascading Value to pass state and the update function to the child page *@
+<!-- Top navbar component -->
+<TopNavbar />
+
+<!-- Cascading layout context for secondary navbar and page content -->
 <CascadingValue Value="LayoutContext" IsFixed="false">
+<br>
+<h2>📚 Admin Dashboard</h2>
+    <!-- Secondary navbar: View selector buttons -->
+    <nav class="sub-navbar bg-white border-bottom py-3">
+        <div class="container-fluid d-flex justify-content-center flex-wrap gap-4">
 
-    <div class="d-flex flex-column" id="wrapper">
-        
-        @* === A. PRIMARY TOP NAVBAR (Branding, Settings, Logout) === *@
-        <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom shadow-sm">
-            <div class="container-fluid">
-                <a class="navbar-brand text-primary fw-bold fs-4" href="/admin">
-                    <i class="bi bi-book-half"></i> IIT ACADEMICA
-                </a>
+            <button class="btn btn-secondary action-rect-btn d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "" ? "action-active-secondary" : "")"
+                    @onclick="@(() => HandleRoleSelect(""))" title="All Users">
+                <i class="bi bi-people-fill fs-4"></i>
+                <span>Users</span>
+            </button>
 
-                <div class="d-flex">
-                    <a href="/admin/settings" class="btn btn-outline-secondary me-2">
-                        <i class="bi bi-gear-fill"></i> Settings
-                    </a>
-                    
-                    <button class="btn btn-danger" @onclick="HandleLogout">
-                        <i class="bi bi-box-arrow-right"></i> Logout
-                    </button>
-                </div>
-            </div>
-        </nav>
+            <button class="btn btn-info text-white action-rect-btn d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "Subjects" ? "action-active-info" : "")"
+                    @onclick="@(() => HandleRoleSelect("Subjects"))" title="Subjects">
+                <i class="bi bi-book fs-4"></i>
+                <span>Subjects</span>
+            </button>
 
-        @* === B. SECONDARY SUB-NAVBAR (View Selector Buttons) === *@
-        <nav class="sub-navbar bg-white border-bottom py-3">
-            <div class="container-fluid d-flex justify-content-center flex-wrap gap-4">
-                
-                @* All Users/Students View (SelectedRole is empty string) *@
-                <button class="btn btn-secondary action-rect-btn d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "" ? "action-active-secondary" : "")"
-                        @onclick="@(() => HandleRoleSelect(""))" title="All Users">
-                    <i class="bi bi-people-fill fs-4"></i>
-                    <span>Users</span>
-                </button>
+            <button class="btn btn-warning action-rect-btn d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "Notifications" ? "action-active-warning" : "")"
+                    @onclick="@(() => HandleRoleSelect("Notifications"))" title="Notifications">
+                <i class="bi bi-bell-fill fs-4"></i>
+                <span>Notifications</span>
+            </button>
 
-              
-
-                @* Subjects View (SelectedRole is "Subjects") *@
-                <button class="btn btn-info text-white action-rect-btn d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "Subjects" ? "action-active-info" : "")"
-                        @onclick="@(() => HandleRoleSelect("Subjects"))" title="Subjects">
-                    <i class="bi bi-book fs-4"></i>
-                    <span>Subjects</span>
-                </button>
-
-                @* Notifications View (SelectedRole is "Notifications") *@
-                <button class="btn btn-warning action-rect-btn d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "Notifications" ? "action-active-warning" : "")"
-                        @onclick="@(() => HandleRoleSelect("Notifications"))" title="Notifications">
-                    <i class="bi bi-bell-fill fs-4"></i>
-                    <span>Notifications</span>
-                </button>
-
-            </div>
-        </nav>
-        
-        @* --- 2. Page Content Wrapper --- *@
-        <div id="page-content-wrapper" class="flex-grow-1">
-            
-            @* === C. Placeholder for Page Content (e.g., Admin.razor) === *@
-            <div class="container-fluid p-4">
-                @Body
-            </div>
         </div>
+    </nav>
+
+    <!-- Page content -->
+    <div class="container-fluid p-4">
+        @Body
     </div>
 
 </CascadingValue>
 
 @code {
-    // 1. Context class to hold the necessary data and callback
     public class AdminLayoutContext
     {
         public string SelectedRole { get; set; } = string.Empty;
         public Action<string> RoleSelectedCallback { get; set; } = delegate { };
     }
 
-    // 2. Instance of the context to be cascaded
-    private AdminLayoutContext LayoutContext { get; set; } = new AdminLayoutContext();
+    private AdminLayoutContext LayoutContext { get; set; } = new();
 
-    // 3. Method to be called by the buttons in the Layout
     private void HandleRoleSelect(string role)
     {
-        // Execute the callback provided by the consuming page (Admin.razor)
         LayoutContext.RoleSelectedCallback.Invoke(role);
-        
-        // Update the layout's state (needed to change the button's active class)
         LayoutContext.SelectedRole = role;
         StateHasChanged();
     }
 
-    private async Task HandleLogout()
-    {
-        await AuthService.Logout();
-        // Redirect and force full reload to reset authentication state
-        NavigationManager.NavigateTo("/", true,true);
-    }
-
-    // 4. Method for the consuming page to set the context on load
     public void SetContext(string selectedRole, Action<string> callback)
     {
         LayoutContext.SelectedRole = selectedRole;
         LayoutContext.RoleSelectedCallback = callback;
-        // The Layout must call StateHasChanged() to re-render the buttons
         StateHasChanged();
     }
 }

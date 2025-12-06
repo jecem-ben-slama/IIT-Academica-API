@@ -1,79 +1,92 @@
 @page "/teacher"
-@attribute [Authorize(Roles = "Teacher")]
-@using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager NavigationManager
-@inject AuthService AuthService
-@inject AuthenticationStateProvider AuthStateProvider
+@inject IIT_Academica_Front.Services.SubjectService SubjectService
 
+<TopNavbar/>
 
+<div class="container mt-4">
+    <h2 class="mb-4 text-primary">My Assigned Sections</h2>
 
-<div class="container mt-5">
-    <div class="card shadow-sm">
-        <div class="card-header bg-success text-white">
-            <h3 class="mb-0">Teacher Dashboard</h3>
-        </div>
-        <div class="card-body">
-            <p class="lead">Welcome to the dedicated teacher area of IIT Academica. Here you can manage your courses, view student submissions, and update grades.</p>
-            
-            <div class="row mt-4">
-                <div class="col-md-4 mb-3">
-                    <a href="/teacher/courses" class="btn btn-outline-primary w-100 p-3">
-                        <i class="bi bi-book-fill me-2"></i> Manage My Courses
-                    </a>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <a href="/teacher/students" class="btn btn-outline-info w-100 p-3">
-                        <i class="bi bi-people-fill me-2"></i> View Students
-                    </a>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <a href="/teacher/grades" class="btn btn-outline-warning w-100 p-3">
-                        <i class="bi bi-graph-up me-2"></i> Update Grades
-                    </a>
-                </div>
+    @if (isLoading)
+    {
+        <div class="text-center p-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
             </div>
+            <p class="mt-2">Loading subjects...</p>
         </div>
-        <div class="card-footer d-flex justify-content-end">
-            <button class="btn btn-danger" @onclick="HandleLogout">
-                <i class="bi bi-box-arrow-right me-2"></i> Log Out
-            </button>
+    }
+    else if (errorMessage != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">Loading Error</h4>
+            <p>@errorMessage</p>
+            <hr>
+            <p class="mb-0">Please check your network connection or try logging in again.</p>
         </div>
-    </div>
+    }
+    else if (Subjects == null || !Subjects.Any())
+    {
+        <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading">No Subjects Assigned</h4>
+            <p class="mb-0">You currently have no subjects or sections assigned to you.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            @foreach (var subject in Subjects)
+            {
+                <div class="col">
+                    <div class="subject-card h-100 shadow-sm border-0" @onclick="() => GoToMaterials(subject.Id)">
+                        <div class="card-body">
+                            <h5 class="card-title text-dark">@subject.SubjectName</h5>
+                            <p class="card-text text-muted">Section ID: **@subject.Id**</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0 d-grid">
+                            <button class="btn btn-sm btn-primary btn-manage">
+                                Manage Materials
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
 </div>
 
 @code {
-    // We are using the [Authorize] attribute which is the preferred way to restrict access
-    // This component will only render if the user is authenticated and authorized (if roles were specified 
-    // in the attribute, e.g., [Authorize(Roles = "Teacher")]).
-    
-    // For this demonstration, I will include the role check in OnInitializedAsync 
-    // to ensure redirection if the Authorization Policy doesn't handle it perfectly.
+    // Assuming SubjectDTO is available via a using statement or defined in IIT_Academica_Front.Models
+    // For compilation, ensure the DTO is accessible.
+    // Placeholder for required DTO:
+   
+
+    private List<SubjectDTO>? Subjects;
+    private string? errorMessage;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        if (!user.Identity?.IsAuthenticated ?? false)
+        try
         {
-            NavigationManager.NavigateTo("/", true, replace: true);
-            return;
+            Subjects = await SubjectService.GetMySectionsAsync();
         }
-        // if authenticated but not tight role redirect to "/forbidden"
-        else if(!user.IsInRole("Teacher"))
+        catch (HttpRequestException ex)
         {
-            NavigationManager.NavigateTo("/forbidden", true, replace: true);
-            return;
+            errorMessage = $"Failed to connect to the API or authorization error occurred. Details: {ex.Message}";
+        }
+        catch (Exception)
+        {
+            errorMessage = "An unexpected error occurred while fetching subjects.";
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 
-
-    private async Task HandleLogout()
+    private void GoToMaterials(int subjectId)
     {
-        // 1. Call the AuthService to clear the token and update authentication state
-        await AuthService.Logout();
-
-        // 2. Redirect to the home page (with a full page reload to clear state)
-        NavigationManager.NavigateTo("/", true, replace: true);
+        NavigationManager.NavigateTo($"/teacher/subject/{subjectId}/materials");
     }
 }

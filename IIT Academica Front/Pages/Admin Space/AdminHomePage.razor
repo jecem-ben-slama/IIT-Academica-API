@@ -1,56 +1,44 @@
 @page "/admin"
-@using Microsoft.AspNetCore.Components.Authorization
-@attribute [Authorize(Roles = "Admin")]
 @layout AdminLayout
+@attribute [Authorize(Roles = "Admin")]
+
+@using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @using TableSkeleton
 @using UserManagementView
 @using SubjectsView
 @using NotificationsView
+
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthStateProvider
 @inject UserService UserService
 
-@if (AdminLayoutContext == null)
-{
-   <TableSkeleton />
-}
-else
-{
-    <h2>📚 Admin Dashboard</h2>
-
-    @* NOTE: The buttons are now in the Layout. We only need the content here. *@
-    <div class="admin-content mt-4">
-        @if (SelectedRole == "" || SelectedRole == "Teacher")
-        {
-            <UserManagementView Students="Users" />
-        }
-        else if (SelectedRole == "Subjects")
-        {
-            <SubjectsView />
-        }
-        else if (SelectedRole == "Notifications")
-        {
-             <NotificationsView />
-        }
-        else
-        {
-            <p>Unknown view</p>
-        }
-    </div>
-}
-
+<div class="admin-content mt-4">
+    @if (SelectedRole == "" || SelectedRole == "Teacher")
+    {
+        <UserManagementView Students="Users" />
+    }
+    else if (SelectedRole == "Subjects")
+    {
+        <SubjectsView />
+    }
+    else if (SelectedRole == "Notifications")
+    {
+         <NotificationsView />
+    }
+    else
+    {
+        <p>Unknown view</p>
+    }
+</div>
 
 @code {
-    // 1. Inject the Layout's class instance
     [CascadingParameter]
     public AdminLayout.AdminLayoutContext? AdminLayoutContext { get; set; }
 
     private string SelectedRole { get; set; } = string.Empty;
     private List<UserReadDto>? Users;
 
-
-    // 2. Initialize the context in the Layout when ready
     protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender && AdminLayoutContext != null)
@@ -62,24 +50,20 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-      
 
         if (!user.Identity?.IsAuthenticated ?? false)
         {
             NavigationManager.NavigateTo("/", true, replace: true);
             return;
         }
-        
-        if (!user.IsInRole("Admin"))
-    {
-        NavigationManager.NavigateTo("/forbidden", true, replace: true);
-        return;
-    }
 
-       
+        if (!user.IsInRole("Admin"))
+        {
+            NavigationManager.NavigateTo("/forbidden", true, replace: true);
+            return;
+        }
 
         SelectedRole = string.Empty;
         await LoadUsersAsync();
@@ -88,13 +72,9 @@ else
     private void SelectRoleFilter(string role)
     {
         SelectedRole = (SelectedRole == role) ? string.Empty : role;
-        // 3. Update the Layout's context whenever the role changes
         if (AdminLayoutContext != null)
-        {
             AdminLayoutContext.SelectedRole = SelectedRole;
-        }
-        // Force the page content to re-render
-        StateHasChanged(); 
+        StateHasChanged();
     }
 
     private async Task LoadUsersAsync()

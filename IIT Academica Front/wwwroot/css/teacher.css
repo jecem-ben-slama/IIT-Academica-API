@@ -1,0 +1,115 @@
+/* --- Teacher Subject Card Enhancements --- */
+
+.subject-card
+{
+    /* Base style for the card */
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border-left: 5px solid var(--bs-primary) !important;
+    /* Left border highlight */
+    border-radius: 0.5rem;
+}
+
+.subject-card:hover
+{
+    /* Interactive hover effect */
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15) !important;
+}
+
+.subject-card .card-body
+{
+    padding-bottom: 0.5rem;
+    /* Reduce space before footer */
+}
+
+/* Ensure the button doesn't look clickable when clicking the card */
+.subject-card .btn-manage
+{
+    pointer-events: none;
+    /* Make the button non-interactive to clicks */
+    opacity: 0.85;
+    /* Slight opacity change for visual effect */
+}
+
+/* Style for the button inside the card footer */
+.subject-card .card-footer
+{
+    padding: 1rem;
+    padding-top: 0;
+}
+
+
+/* ----- Modern UI Enhancements ----- */
+
+.page-title
+{
+    font-weight: 800;
+    font-size: 2rem;
+    color: #2c3e50;
+}
+
+.card-modern
+{
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.table-modern thead
+{
+    background: linear-gradient(90deg, #2c3e50, #34495e);
+    color: white;
+}
+
+.table-modern tbody tr:hover
+{
+    background: #f5f7fa !important;
+}
+
+.btn-soft
+{
+    border-radius: 10px;
+    padding: 8px 15px;
+    font-weight: 500;
+}
+
+.badge-material
+{
+    background: #6c5ce7 !important;
+    padding: 6px 12px;
+    border-radius: 6px;
+}
+
+.modal-modern .modal-content
+{
+    border-radius: 15px !important;
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+}
+
+.modal-modern .modal-header
+{
+    border-top-left-radius: 15px !important;
+    border-top-right-radius: 15px !important;
+    padding: 1.4rem;
+}
+
+.form-label
+{
+    font-weight: 600;
+}
+
+.form-control
+{
+    border-radius: 10px;
+}
+
+input::file-selector-button
+{
+    border-radius: 8px;
+    padding: 6px 12px;
+    background: #2980b9;
+    border: none;
+    color: white;
+}

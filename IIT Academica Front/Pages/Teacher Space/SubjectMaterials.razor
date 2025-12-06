@@ -1,0 +1,403 @@
+@page "/teacher/subject/{SubjectId:int}/materials"
+@inject NavigationManager NavigationManager
+@inject CourseMaterialService CourseMaterialService
+@inject IJSRuntime JSRuntime
+
+<TopNavbar/>
+
+<div class="container mt-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="page-title">Course Materials 📚</h2>
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary btn-soft" @onclick="LoadMaterials" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                }
+                <i class="bi bi-arrow-clockwise @(isLoading ? "d-none" : "")"></i> Refresh
+            </button>
+
+            <button class="btn btn-success btn-soft" @onclick="() => ShowModal(false, null!)">
+                <i class="bi bi-plus-circle"></i> Add New
+            </button>
+        </div>
+    </div>
+
+    <h5 class="text-secondary mb-4">Subject ID: <strong>@SubjectId</strong></h5>
+
+    @* -------- Loading State -------- *@
+    @if (isLoading)
+    {
+        <div class="card-modern text-center">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-3 fs-5">Fetching latest materials...</p>
+        </div>
+    }
+    else if (errorMessage != null)
+    {
+        <div class="alert alert-danger shadow-sm">
+            <h5>Error loading materials</h5>
+            <p>@errorMessage</p>
+        </div>
+    }
+    else if (Materials == null || !Materials.Any())
+    {
+        <div class="card-modern text-center">
+            <h5 class="text-muted">No Materials Found</h5>
+            <p>Click <strong>Add New</strong> to upload your first course material.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card-modern">
+            <table class="table table-modern table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 30%;">Title</th>
+                        <th style="width: 40%;">Description</th>
+                        <th style="width: 15%;">Type</th>
+                        <th style="width: 15%;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in Materials)
+                    {
+                        <tr>
+                            <td class="fw-bold">@m.Title</td>
+                            <td>@(string.IsNullOrEmpty(m.Description) ? "N/A" : m.Description)</td>
+                            <td><span class="badge badge-material">@m.MaterialType</span></td>
+
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-info text-white btn-soft" @onclick="() => DownloadMaterial(m.Id)">
+                                        <i class="bi bi-download"></i>
+                                    </button>
+
+                                    <button class="btn btn-sm btn-warning btn-soft" @onclick="() => ShowModal(true, m)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+
+                                    <button class="btn btn-sm btn-danger btn-soft" @onclick="() => DeleteMaterial(m)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@* -------- Modal -------- *@
+<div class="modal modal-modern @(showModal ? "show d-block" : "")" style="@(showModal ? "background-color: rgba(0,0,0,.6);" : "")">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <EditForm Model="@(IsEditing ? (object)EditMaterialDto : (object)NewMaterialDto)"
+                     OnValidSubmit="@(IsEditing ? HandleEditMaterial : HandleUploadMaterial)">
+
+                <DataAnnotationsValidator />
+
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        @(IsEditing ? "Edit Material" : "Upload New Material")
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="HideModal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+
+                        @if (IsEditing)
+                        {
+                            <InputText class="form-control" @bind-Value="@EditMaterialDto.Title" />
+                        }
+                        else
+                        {
+                            <InputText class="form-control" @bind-Value="@NewMaterialDto.Title" />
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+
+                        @if (IsEditing)
+                        {
+                            <InputTextArea class="form-control" @bind-Value="@EditMaterialDto.Description" />
+                        }
+                        else
+                        {
+                            <InputTextArea class="form-control" @bind-Value="@NewMaterialDto.Description" />
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">@((IsEditing ? "Replace File (Optional)" : "Choose File"))</label>
+
+                        @if (IsEditing)
+                        {
+                            <InputFile OnChange="HandleEditFileSelection" class="form-control" />
+                        }
+                        else
+                        {
+                            <InputFile OnChange="HandleFileSelection" class="form-control" />
+                            @if (uploadFile == null && uploadSubmitted)
+                            {
+                                <small class="text-danger">File is required</small>
+                            }
+                        }
+                    </div>
+
+                    @if (uploadError != null)
+                    {
+                        <div class="alert alert-danger">@uploadError</div>
+                    }
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-soft" @onclick="HideModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-soft" disabled="@isUploading">
+                        @if (isUploading)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        @(IsEditing ? "Save Changes" : "Upload")
+                    </button>
+                </div>
+
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    /* ----- Your existing C# code (unchanged) ----- */
+}
+
+
+@code {
+ 
+
+    [Parameter] public int SubjectId { get; set; }
+
+    // ----------------------------------------------------------------------------
+
+    private List<CourseMaterialDto>? Materials;
+    private bool isLoading = true;
+    private string? errorMessage;
+    private bool isUploading = false;
+    private string? uploadError;
+    private bool uploadSubmitted = false;
+    private bool showModal = false;
+    private bool IsEditing = false; 
+
+    // Data Transfer Objects
+    private CreateCourseMaterialDto NewMaterialDto = new CreateCourseMaterialDto();
+    private UpdateCourseMaterialDto EditMaterialDto = new UpdateCourseMaterialDto(); 
+    private IBrowserFile? uploadFile; // Used for New Upload
+    private IBrowserFile? EditFile; // 🚀 NEW: Used for Optional File Replacement in Edit Mode
+    
+    // --- Modal State Management (Combined) ---
+    private void ShowModal(bool isEdit, CourseMaterialDto? materialToEdit)
+    {
+        // Reset state
+        uploadError = null;
+        uploadSubmitted = false;
+        isUploading = false;
+        EditFile = null; // 🚀 Reset the optional edit file
+        
+        IsEditing = isEdit;
+        
+        if (IsEditing && materialToEdit != null)
+        {
+            // Populate Edit DTO from the selected material
+            EditMaterialDto = new UpdateCourseMaterialDto
+            {
+                Id = materialToEdit.Id,
+                Title = materialToEdit.Title,
+                Description = materialToEdit.Description,
+                SubjectId = materialToEdit.SubjectId // Keep subject ID for context/service call
+            };
+        }
+        else
+        {
+            // Prepare for new upload
+            NewMaterialDto = new CreateCourseMaterialDto { SubjectId = SubjectId };
+            uploadFile = null;
+        }
+
+        showModal = true;
+    }
+
+    private void HideModal()
+    {
+        showModal = false;
+        IsEditing = false; // Reset mode
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMaterials();
+    }
+    
+    private async Task LoadMaterials()
+    {
+        isLoading = true;
+        errorMessage = null;
+        
+        try
+        {
+            // Ensure the service is not null (addressing the previous error context)
+            if (CourseMaterialService == null)
+            {
+                throw new InvalidOperationException("CourseMaterialService is not initialized. Check Program.cs registration.");
+            }
+            Materials = await CourseMaterialService.GetMaterialsBySubjectAsync(SubjectId);
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An unexpected error occurred: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    // --- Upload Handlers ---
+    private void HandleFileSelection(InputFileChangeEventArgs e)
+    {
+        uploadFile = e.File;
+        uploadSubmitted = false;
+    }
+
+    private async Task HandleUploadMaterial()
+    {
+        uploadSubmitted = true;
+        uploadError = null;
+        if (uploadFile == null) return;
+
+        isUploading = true;
+        NewMaterialDto.SubjectId = SubjectId;
+        
+        try
+        {
+            var newMaterial = await CourseMaterialService.UploadMaterialAsync(NewMaterialDto, uploadFile);
+            
+            Materials ??= new List<CourseMaterialDto>();
+            Materials.Add(newMaterial);
+
+            HideModal();
+        }
+        catch (HttpRequestException ex)
+        {
+            uploadError = ex.Message; 
+        }
+        finally
+        {
+            isUploading = false;
+        }
+    }
+    
+    // 🚀 NEW: Handler for file selection during Edit
+    private void HandleEditFileSelection(InputFileChangeEventArgs e)
+    {
+        EditFile = e.File;
+    }
+
+    // 🚀 MODIFIED: Edit Handler to include the optional file
+    private async Task HandleEditMaterial()
+    {
+        isUploading = true;
+        uploadError = null;
+        
+        try
+        {
+            // 1. Call the service to update the metadata AND pass the optional file
+            // The service must be modified to accept the optional IBrowserFile and handle 
+            // sending multipart/form-data only when EditFile is not null.
+            var updatedMaterial = await CourseMaterialService.UpdateMaterialAsync(EditMaterialDto, EditFile);
+            
+            // 2. Update the local list
+            var existingMaterial = Materials?.FirstOrDefault(m => m.Id == updatedMaterial.Id);
+            if (existingMaterial != null)
+            {
+                existingMaterial.Title = updatedMaterial.Title;
+                existingMaterial.Description = updatedMaterial.Description;
+                // If the file was replaced, the API response should contain the updated MaterialType/FileName/FilePath.
+                existingMaterial.MaterialType = updatedMaterial.MaterialType;
+            }
+
+            HideModal();
+        }
+        catch (HttpRequestException ex)
+        {
+            uploadError = ex.Message;
+        }
+        finally
+        {
+            isUploading = false;
+        }
+    }
+
+    // --- Delete Handler ---
+    private async Task DeleteMaterial(CourseMaterialDto material)
+    {
+        // Simple confirmation dialog, replace with a proper Blazor modal if desired
+        if (!await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete material: '{material.Title}'? This action cannot be undone."))
+        {
+            return;
+        }
+
+        try
+        {
+            await CourseMaterialService.DeleteMaterialAsync(material.Id);
+            Materials?.RemoveAll(m => m.Id == material.Id);
+            StateHasChanged(); 
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = $"Deletion failed: {ex.Message}";
+        }
+    }
+    
+    // --- Download Handler ---
+    private async Task DownloadMaterial(int materialId)
+    {
+        // The full download implementation is typically complex, involving JS interop
+        try
+        {
+            // This only gets the response, actual download logic via FileSaver.js or similar is needed
+            var response = await CourseMaterialService.DownloadMaterialAsync(materialId);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Attempt to read content and stream it to the client via JS interop
+                var fileBytes = await response.Content.ReadAsByteArrayAsync();
+                var fileName = response.Content.Headers.ContentDisposition?.FileNameStar?.Trim('"')
+                    ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"') 
+                    ?? $"material_{materialId}.dat"; // Fallback name
+
+                await JSRuntime.InvokeVoidAsync("BlazorDownloadFile", fileName, fileBytes);
+            }
+            else
+            {
+                errorMessage = $"Download failed. Status: {(int)response.StatusCode}. Details: {await response.Content.ReadAsStringAsync()}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Download error: {ex.Message}";
+        }
+    }
+}

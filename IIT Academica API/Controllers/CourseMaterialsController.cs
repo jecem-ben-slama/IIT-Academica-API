@@ -178,6 +178,94 @@ public class CourseMaterialsController : ControllerBase
     // ... (ensure your controller signature includes IFileStorageService) ...
     // public CourseMaterialsController(IUnitOfWork unitOfWork, IFileStorageService fileStorageService) { ... }
     // ...
+// U P D A T E (PUT) 🚀 NEW ENDPOINT
+    // -------------------------------------------
+    // Controllers/CourseMaterialsController.cs
+
+// ... (existing using statements) ...
+
+// -------------------------------------------
+// U P D A T E (PUT) 🚀 MODIFIED ENDPOINT
+// -------------------------------------------
+[HttpPut("update/{id}")]
+[Authorize(Roles = "Teacher")]
+// 🚀 Change from [FromBody] to [FromForm] to accept the file and metadata
+public async Task<ActionResult<CourseMaterialDto>> UpdateMaterial(
+    int id, 
+    [FromForm] UpdateCourseMaterialDto dto, // Metadata
+    IFormFile? file = null) // Optional File
+{
+    if (id != dto.Id) return BadRequest("Material ID mismatch.");
+    if (!ModelState.IsValid) return BadRequest(ModelState);
+    if (!TryGetTeacherId(out int currentTeacherId)) return Unauthorized();
+
+    // 1. Retrieve the existing material
+    var material = await Repository.GetByIdAsync(id);
+    if (material == null) return NotFound("Course material not found.");
+
+    // 2. SECURITY CHECK: Ensure the teacher is authorized
+    if (!await IsTeacherAuthorizedForSubject(material.SubjectId))
+    {
+        return Forbid("You are not authorized to edit materials for this subject.");
+    }
+
+    // 3. Update metadata fields
+    material.Title = dto.Title;
+    material.Description = dto.Description;
+
+    // 4. Handle Optional File Replacement (If a new file is provided)
+    if (file != null && file.Length > 0)
+    {
+        // a. DELETE the old file if one exists
+        if (!string.IsNullOrEmpty(material.FilePathOrUrl))
+        {
+            try
+            {
+                await _fileStorageService.DeleteFileAsync(material.FilePathOrUrl);
+            }
+            catch (Exception ex)
+            {
+                // Log and continue, as the new file upload is the priority
+                System.Diagnostics.Debug.WriteLine($"Warning: Old file deletion failed: {ex.Message}");
+            }
+        }
+
+        // b. UPLOAD the new file
+        string newFileUrl;
+        try
+        {
+            // Use the updated description as the new file name base
+            newFileUrl = await _fileStorageService.SaveFileAsync(file, material.SubjectId, material.Description); 
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                $"File replacement failed: {ex.Message}");
+        }
+
+        // c. Update the material entity with new file information
+        material.FilePathOrUrl = newFileUrl;
+        material.MaterialType = file.ContentType; // Update the MIME type
+    }
+    // 5. Persist changes
+    await Repository.UpdateAsync(material);
+    await _unitOfWork.CompleteAsync();
+
+    // 6. Return the updated DTO
+    var materialDto = new CourseMaterialDto
+    {
+        Id = material.Id,
+        SubjectId = material.SubjectId,
+        Title = material.Title,
+        Description = material.Description,
+        FilePathOrUrl = material.FilePathOrUrl,
+        MaterialType = material.MaterialType,
+        UploadDate = material.UploadDate
+    };
+
+    return Ok(materialDto);
+}
+// ... (rest of the controller remains the same) ...
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Teacher")]

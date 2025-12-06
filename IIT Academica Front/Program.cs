@@ -25,6 +25,9 @@ namespace IIT_Academica_Front
            builder.Services.AddScoped<UserService>();
            builder.Services.AddScoped<SubjectService>();
            builder.Services.AddScoped<NotificationService>(); 
+           builder.Services.AddScoped<CourseMaterialService>();
+            builder.Services.AddScoped<EnrollmentService>();
+
           builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5030") });
 
             await builder.Build().RunAsync();
