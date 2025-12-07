@@ -103,7 +103,8 @@ public class EnrollmentController : ControllerBase
             RegistrationCode = e.Subject.RegistrationCode,
             CourseTitle = e.Subject.Title,
             EnrollmentDate = e.EnrollmentDate,
-            TeacherFullName = e.Subject.Teacher?.Name + " " + e.Subject.Teacher?.LastName
+            TeacherFullName = e.Subject.Teacher?.Name + " " + e.Subject.Teacher?.LastName,
+            SubjectId=e.Subject.Id
         }).ToList();
 
         return Ok(dtos);

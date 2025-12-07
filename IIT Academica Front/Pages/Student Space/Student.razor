@@ -1,0 +1,240 @@
+@page "/student"
+@layout StudentLayout
+@using IIT_Academica.Enums
+@using IIT_Academica_DTOs.Enrollment_DTOs
+@using  StudentLayout
+
+@inject EnrollmentService EnrollmentService
+@inject SubjectService SubjectService
+@inject IJSRuntime JSRuntime
+
+@* --- Render Section: Conditional Content --- *@
+
+<div class="container-fluid p-4">
+    
+    @if (LoadingError != null)
+    {
+        <div class="alert alert-danger">
+            <h5 class="alert-heading">Data Loading Error</h5>
+            <p>Could not fetch data: @LoadingError</p>
+            <button class="btn btn-sm btn-outline-danger mt-2" @onclick="LoadDataAsync">Retry Loading</button>
+        </div>
+    }
+
+    @* --- Conditional Rendering based on the selected view state --- *@
+    @if (SelectedView == ViewState.MyCourses)
+    {
+        <MyCourses 
+            EnrolledCourses="@EnrolledCourses" 
+            IsLoadingMyCourses="@IsLoadingMyCourses"
+            OnDropCourse="ConfirmDropCourse" />
+    }
+    else if (SelectedView == ViewState.AllCourses)
+    {
+        <AllCourses 
+            AvailableSubjects="@AvailableSubjects"
+            EnrolledCourses="@EnrolledCourses" 
+            IsLoadingAllSubjects="@IsLoadingAllSubjects"
+            OnEnrollmentRequested="ShowEnrollmentModal" />
+    }
+</div>
+
+@* ---------------- Modal: Enrollment Confirmation ---------------- *@
+
+<div class="modal @(ShowEnrollModal ? "show d-block" : "")" tabindex="-1" 
+     style="@(ShowEnrollModal ? "background-color: rgba(0,0,0,.5);" : "")">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            
+            <EditForm Model="@EnrollmentDto" OnValidSubmit="HandleEnrollment">
+                <DataAnnotationsValidator />
+                
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Enroll in @(CurrentSubject?.SubjectName)</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="HideEnrollmentModal"></button>
+                </div>
+                
+                <div class="modal-body">
+                    <p>To enroll in <b>@(CurrentSubject?.SubjectName)</b>, enter the registration code.</p>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Registration Code</label>
+                        <InputText class="form-control" @bind-Value="EnrollmentDto.RegistrationCode" />
+                        <ValidationMessage For="@(() => EnrollmentDto.RegistrationCode)" />
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(EnrollmentMessage))
+                    {
+                        <div class="alert @(EnrollmentSuccess ? "alert-success" : "alert-danger")">
+                            @EnrollmentMessage
+                        </div>
+                    }
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" @onclick="HideEnrollmentModal">Cancel</button>
+                    <button class="btn btn-primary" type="submit" disabled="@IsEnrolling">
+                        @if (IsEnrolling)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        Confirm Enroll
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    @* --- Cascading State and View Selection --- *@
+    
+    [CascadingParameter]
+    public StudentLayout.StudentLayoutContext? LayoutContext { get; set; }
+
+private ViewState SelectedView { get; set; } = ViewState.MyCourses; // Resolved via new using
+    // --- Data State ---
+    
+    private List<StudentCourseDto>? EnrolledCourses;
+    private List<SubjectDTO>? AvailableSubjects;
+
+    private string? LoadingError;
+    private bool IsLoadingMyCourses = true;
+    private bool IsLoadingAllSubjects = true;
+
+    // --- Modal State ---
+    
+    private bool ShowEnrollModal = false;
+    private SubjectDTO? CurrentSubject;
+    private EnrollmentRequestDto EnrollmentDto = new EnrollmentRequestDto();
+    private bool IsEnrolling = false;
+    private string? EnrollmentMessage;
+    private bool EnrollmentSuccess = false;
+
+    // --- Lifecycle and Initialization ---
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && LayoutContext != null)
+        {
+            // Register the page's callback method with the layout's context.
+            // When the layout buttons are clicked, this method updates the page's state.
+            LayoutContext.ViewSelectedCallback = SelectView;
+            
+            await LoadDataAsync();
+            StateHasChanged();
+        }
+    }
+
+    private void SelectView(ViewState view)
+    {
+        SelectedView = view;
+        StateHasChanged(); // Force the page to re-render, switching the view content
+    }
+
+    // --- Data Loading Logic ---
+
+    public async Task LoadDataAsync()
+    {
+        LoadingError = null;
+        await Task.WhenAll(LoadMyCoursesAsync(), LoadAllSubjectsAsync());
+    }
+
+    private async Task LoadMyCoursesAsync()
+    {
+        IsLoadingMyCourses = true;
+        try { EnrolledCourses = await EnrollmentService.GetStudentEnrollmentsAsync(); }
+        catch (Exception ex) { LoadingError = ex.Message; }
+        finally { IsLoadingMyCourses = false; }
+    }
+
+    private async Task LoadAllSubjectsAsync()
+    {
+        IsLoadingAllSubjects = true;
+        try { AvailableSubjects = await SubjectService.GetAllSubjectsAsync(); }
+        catch (Exception ex) { LoadingError = ex.Message; }
+        finally { IsLoadingAllSubjects = false; }
+    }
+
+    // --- Enrollment Modal Logic ---
+
+    private void ShowEnrollmentModal(SubjectDTO subject)
+    {
+        CurrentSubject = subject;
+        EnrollmentDto = new EnrollmentRequestDto { SubjectId = subject.Id };
+        EnrollmentMessage = null;
+        EnrollmentSuccess = false;
+        ShowEnrollModal = true;
+    }
+
+    private void HideEnrollmentModal()
+    {
+        ShowEnrollModal = false;
+        EnrollmentMessage = null;
+    }
+
+    private async Task HandleEnrollment()
+    {
+        try
+        {
+            IsEnrolling = true;
+            EnrollmentMessage = null;
+            
+            // Assume EnrollAsync returns a DTO or object with EnrollmentId
+            var result = await EnrollmentService.EnrollAsync(EnrollmentDto);
+
+            // Success: Update local state immediately for the 'My Courses' view
+            EnrolledCourses ??= new();
+            EnrolledCourses.Add(new StudentCourseDto
+            {
+                SubjectId = CurrentSubject!.Id,
+                CourseTitle = CurrentSubject.SubjectName,
+                EnrollmentId = result.EnrollmentId // Use the ID from the result
+            });
+            
+            EnrollmentMessage = $"Successfully enrolled in {CurrentSubject.SubjectName}!";
+            EnrollmentSuccess = true;
+
+            // Wait a moment before closing the modal
+            await Task.Delay(1200);
+            HideEnrollmentModal();
+        }
+        catch (Exception ex)
+        {
+            // Failure Path
+            EnrollmentSuccess = false;
+            EnrollmentMessage = $"Enrollment failed: {ex.Message}";
+        }
+        finally
+        {
+            IsEnrolling = false;
+        }
+    }
+
+    // --- Drop Course Logic ---
+
+    private async Task ConfirmDropCourse(StudentCourseDto c)
+    {
+        if (await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to drop the course: {c.CourseTitle}?"))
+            await DropCourseAsync(c);
+    }
+
+    private async Task DropCourseAsync(StudentCourseDto c)
+    {
+        try
+        {
+            await EnrollmentService.DropCourseAsync(c.EnrollmentId);
+            
+            // Update local state for the 'My Courses' view
+            EnrolledCourses?.Remove(c);
+            
+            await JSRuntime.InvokeVoidAsync("alert", $"Successfully dropped {c.CourseTitle}.");
+            StateHasChanged(); // Refresh the MyCourses view
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error dropping course: {ex.Message}");
+        }
+    }
+}

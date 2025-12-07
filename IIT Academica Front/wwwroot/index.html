@@ -38,6 +38,28 @@
 
     <script src="_framework/blazor.webassembly.js"></script>
     <script>navigator.serviceWorker.register('service-worker.js');</script>
+    <script>
+        // Add this script to your index.html/host file
+        window.BlazorDownloadFile = async (fileName, contentType, contentStream) => {
+            const arrayBuffer = await contentStream.arrayBuffer();
+            const blob = new Blob([arrayBuffer], { type: contentType });
+            const url = URL.createObjectURL(blob);
+
+            // Create a temporary anchor element
+            const anchorElement = document.createElement('a');
+            anchorElement.href = url;
+            anchorElement.download = fileName;
+
+            // Programmatically click the anchor to trigger the download
+            document.body.appendChild(anchorElement);
+            anchorElement.click();
+            document.body.removeChild(anchorElement);
+
+            // Clean up the URL object
+            URL.revokeObjectURL(url);
+        }
+    </script>
+
 </body>
 
 </html>

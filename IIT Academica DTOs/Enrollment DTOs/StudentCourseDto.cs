@@ -13,5 +13,6 @@ namespace IIT_Academica_DTOs.Enrollment_DTOs
         public string CourseTitle { get; set; }
         public string TeacherFullName { get; set; }
         public DateTime EnrollmentDate { get; set; }
+        public int SubjectId {get;set;}
     }
 }

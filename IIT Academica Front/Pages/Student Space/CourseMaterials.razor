@@ -1,0 +1,190 @@
+@page "/student/materials/{SubjectId:int}"
+
+@using IIT_Academica_Front.Models
+@using IIT_Academica_Front.Services
+@inject CourseMaterialService MaterialService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+
+<div class="container p-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📚 Course Materials for @SubjectName</h2>
+        <button class="btn btn-secondary" @onclick="GoBack">
+            <i class="bi bi-arrow-left"></i> Back to Courses
+        </button>
+    </div>
+
+    @* --- Loading State --- *@
+    @if (IsLoading)
+    {
+        <div class="text-center p-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading course materials...</p>
+        </div>
+    }
+
+    @* --- Error State --- *@
+    else if (LoadingError != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">Loading Failed!</h4>
+            <p>Could not load materials for the subject. Details: @LoadingError</p>
+            <button class="btn btn-sm btn-outline-danger mt-2" @onclick="LoadMaterialsAsync">Retry</button>
+        </div>
+    }
+
+    @* --- Data Display State --- *@
+    else if (Materials == null || Materials.Count == 0)
+    {
+        <div class="alert alert-info text-center" role="alert">
+            <i class="bi bi-info-circle fs-4 me-2"></i>
+            There are no course materials available for this subject yet.
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            @foreach (var material in Materials)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-primary">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title text-primary">
+                                <i class="bi bi-file-earmark-text me-2"></i> @material.Title
+                            </h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Uploaded: @material.UploadDate.ToShortDateString()</h6>
+                            <p class="card-text flex-grow-1">@material.Description</p>
+                            
+                            <div class="mt-3">
+                                <button class="btn btn-success w-100" @onclick="() => DownloadMaterial(material)">
+                                    @if (material.Id == DownloadingMaterialId)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2">  Downloading...</span>
+                                      
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-download me-2">Download File</i> 
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+</div>
+
+@code {
+    // Parameter passed via the route (e.g., /student/materials/10)
+    [Parameter]
+    public int SubjectId { get; set; }
+
+    // --- State Management ---
+    private List<CourseMaterialDto>? Materials { get; set; }
+    private string SubjectName { get; set; } = "Subject"; // Placeholder until subject data is fetched/passed
+    private bool IsLoading { get; set; } = true;
+    private string? LoadingError { get; set; }
+    private int? DownloadingMaterialId { get; set; } // Tracks which file is currently being downloaded
+
+    // --- Lifecycle ---
+
+    protected override async Task OnInitializedAsync()
+    {
+        // NOTE: Ideally, the parent component (Student.razor) would pass the SubjectName
+        // or a dedicated SubjectService would be injected to fetch it.
+        // For simplicity, we assume we can fetch material without knowing the name first.
+        await LoadMaterialsAsync();
+    }
+
+    // --- Data Loading Logic ---
+
+    private async Task LoadMaterialsAsync()
+    {
+        IsLoading = true;
+        LoadingError = null;
+        Materials = null;
+        try
+        {
+            Materials = await MaterialService.GetMaterialsBySubjectAsync(SubjectId);
+            // Example of setting a placeholder name if DTOs don't contain it
+            if (Materials != null && Materials.Any())
+            {
+                // Assuming the DTO has a SubjectName property, or you'd use a dedicated service to get it
+                // SubjectName = Materials.First().SubjectName;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            LoadingError = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            LoadingError = $"An unexpected error occurred: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    // --- Download Logic ---
+
+    private async Task DownloadMaterial(CourseMaterialDto material)
+    {
+        // Prevent multiple downloads simultaneously
+        if (DownloadingMaterialId.HasValue) return;
+
+        DownloadingMaterialId = material.Id;
+        StateHasChanged();
+
+        try
+        {
+            // 1. Call the service to get the secure download response
+            var response = await MaterialService.DownloadMaterialAsync(material.Id);
+
+            response.EnsureSuccessStatusCode();
+
+            // 2. Read the file stream from the response content
+            using var stream = await response.Content.ReadAsStreamAsync();
+            
+            // 3. Get file metadata for saving
+            var fileName = response.Content.Headers.ContentDisposition?.FileNameStar
+                ?? response.Content.Headers.ContentDisposition?.FileName
+                ?? material.Title; // Fallback to title
+
+            var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+
+            // 4. Use JavaScript Interop to save the file on the client machine
+            // You need a client-side JS function (e.g., 'BlazorDownloadFile') to handle this.
+            await JSRuntime.InvokeVoidAsync("BlazorDownloadFile", fileName, contentType, stream);
+
+        }
+        catch (HttpRequestException ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Download failed: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"An error occurred during download: {ex.Message}");
+        }
+        finally
+        {
+            DownloadingMaterialId = null;
+            StateHasChanged();
+        }
+    }
+
+    // --- Navigation Logic ---
+
+    private void GoBack()
+    {
+        // Navigates back to the main student page where 'MyCourses' or 'AllCourses' views exist
+        Navigation.NavigateTo("/student");
+    }
+}

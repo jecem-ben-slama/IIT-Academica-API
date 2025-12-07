@@ -1,0 +1,74 @@
+@* This component displays the list of enrolled courses. *@
+@using IIT_Academica_DTOs.Enrollment_DTOs
+@inject NavigationManager Navigation
+
+<div class="card shadow-sm h-100">
+    <div class="card-header bg-success text-white">
+        <h4 class="mb-0">My Enrolled Courses 🎯</h4>
+    </div>
+    <div class="card-body">
+        @if (IsLoadingMyCourses)
+        {
+            <p class="text-center"><span class="spinner-border spinner-border-sm"></span> Loading your courses...</p>
+        }
+        else if (EnrolledCourses == null || !EnrolledCourses.Any())
+        {
+            <div class="alert alert-info">You are not currently enrolled in any subjects.</div>
+        }
+        else
+        {
+            <ul class="list-group list-group-flush">
+                @foreach (var course in EnrolledCourses)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="course-link" @onclick="() => NavigateToMaterials(course.SubjectId)" role="button" title="View Course Materials">
+                            <span class="fw-bold text-primary course-title">@course.CourseTitle</span>
+                            @* Optional: Display other details like teacher or date *@
+                            @* <small class="text-muted d-block">Enrolled on: @course.EnrollmentDate.ToShortDateString()</small> *@
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => OnDropCourse.InvokeAsync(course)">
+                            Drop
+                        </button>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</div>
+
+@code {
+    // Parameter to receive the list of enrolled courses from the parent (Student.razor)
+    [Parameter]
+    public List<StudentCourseDto>? EnrolledCourses { get; set; }
+
+    // Parameter to receive the loading state from the parent
+    [Parameter]
+    public bool IsLoadingMyCourses { get; set; } = true;
+
+    // EventCallback to notify the parent when the Drop button is clicked
+    [Parameter]
+    public EventCallback<StudentCourseDto> OnDropCourse { get; set; }
+
+    /// <summary>
+    /// Navigates the user to the Course Materials page for the selected subject.
+    /// </summary>
+    /// <param name="subjectId">The ID of the subject whose materials are to be viewed.</param>
+    private void NavigateToMaterials(int subjectId)
+    {
+        // Navigates to the route defined as /student/materials/{SubjectId:int}
+        Navigation.NavigateTo($"/student/materials/{subjectId}");
+    }
+}
+
+<style>
+    /* Add a little style to make the course title look clickable */
+    .course-link {
+        cursor: pointer;
+        transition: color 0.1s;
+    }
+
+    .course-link:hover .course-title {
+        color: var(--bs-indigo) !important; /* Use a hover color */
+        text-decoration: underline;
+    }
+</style>

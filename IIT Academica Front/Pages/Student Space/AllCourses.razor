@@ -1,0 +1,75 @@
+@* This component displays the list of all available subjects.
+*@
+@using IIT_Academica_DTOs.Enrollment_DTOs
+
+<div class="card shadow-sm h-100">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Available Subjects 📖</h4>
+    </div>
+    <div class="card-body">
+        @if (IsLoadingAllSubjects)
+        {
+            <p class="text-center"><span class="spinner-border spinner-border-sm"></span> Loading available subjects...</p>
+        }
+        else if (AvailableSubjects == null || !AvailableSubjects.Any())
+        {
+    
+         <div class="alert alert-warning">No subjects are currently available for enrollment.</div>
+        }
+        else
+        {
+            <ul class="list-group list-group-flush">
+                @foreach (var subject in AvailableSubjects)
+                {
+          
+           // Determine if the student is enrolled in this subject
+                    bool isEnrolled = EnrolledCourses?.Any(c => c.SubjectId == subject.Id) ??
+false;
+
+                    <li class="list-group-item d-flex justify-content-between align-items-center @(isEnrolled ? "list-group-item-light" : "")">
+                        <div>
+                            <span class="fw-bold">@subject.SubjectName</span>
+                            <small class="text-muted d-block">ID: @subject.Id</small>
+      
+                   </div>
+                        @if (isEnrolled)
+                        {
+                            <span class="badge bg-success">Enrolled</span>
+   
+                         }
+                        else
+                        {
+                            <button class="btn btn-sm 
+btn-primary" @onclick="() => OnEnrollmentRequested.InvokeAsync(subject)">
+                                Enroll
+                            </button>
+                        }
+             
+        </li>
+                }
+            </ul>
+        }
+    </div>
+</div>
+
+@code {
+    // Parameter to receive the list of all available subjects
+    [Parameter]
+    public List<SubjectDTO>?
+AvailableSubjects { get; set; }
+
+    // Parameter to receive the list of enrolled courses (for comparison)
+    [Parameter]
+    public List<StudentCourseDto>?
+EnrolledCourses { get; set; }
+
+    // Parameter to receive the loading state from the parent
+    [Parameter]
+    public bool IsLoadingAllSubjects { get;
+set; } = true;
+
+    // EventCallback to notify the parent when an enrollment is requested (to show the modal)
+    [Parameter]
+    public EventCallback<SubjectDTO> OnEnrollmentRequested { get;
+set; }
+}

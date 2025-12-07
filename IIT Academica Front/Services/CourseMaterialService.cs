@@ -8,9 +8,7 @@ using Microsoft.AspNetCore.Components.Forms; // For IBrowserFile
 
 namespace IIT_Academica_Front.Services
 {
-    // Make sure to define the necessary DTOs and models:
-    // CourseMaterialDto, CreateCourseMaterialDto, ApiErrorResponse
-    
+   
     public class CourseMaterialService
     {
         private readonly HttpClient _httpClient;
@@ -112,9 +110,7 @@ namespace IIT_Academica_Front.Services
             throw new HttpRequestException($"Failed to fetch materials. Status: {response.StatusCode}. Details: {errorContent}");
         }
 
-        /// <summary>
-        /// Retrieves a single course material by ID (Teacher/Student access).
-        /// </summary>
+       
         /// 
        public async Task<CourseMaterialDto> UpdateMaterialAsync(
     UpdateCourseMaterialDto
@@ -171,6 +167,8 @@ namespace IIT_Academica_Front.Services
 
     return updatedMaterial;
 }
+
+// stuident/teacher
         public async Task<CourseMaterialDto?> GetMaterialByIdAsync(int id)
         {
             await SetAuthorizationHeader();

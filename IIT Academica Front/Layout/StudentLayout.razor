@@ -1,0 +1,74 @@
+@namespace StudentLayout
+@using IIT_Academica.Enums
+@inherits LayoutComponentBase
+
+@* The TopNavbar component must be defined somewhere, assuming it exists. *@
+<TopNavbar/> 
+
+<div class="container-fluid pt-4">
+
+    @* Define the context class for cascading the state *@
+    <CascadingValue Value="LayoutContext" IsFixed="false">
+
+        @* --- Rounded Button Selector (View Controller) --- *@
+        <div class="d-flex justify-content-center mb-4">
+            
+            <button class="@GetButtonClass(ViewState.MyCourses)"
+                    @onclick="() => HandleViewSelect(ViewState.MyCourses)">
+                <i class="bi bi-list-task me-2"></i> My Enrolled Courses
+            </button>
+
+            <button class="@GetButtonClass(ViewState.AllCourses)"
+                    @onclick="() => HandleViewSelect(ViewState.AllCourses)">
+                <i class="bi bi-calendar-check me-2"></i> All Available Courses
+            </button>
+
+        </div>
+
+        @* This is where the Student.razor page content will be rendered *@
+        <div class="content-display">
+            @Body
+        </div>
+
+    </CascadingValue>
+
+</div>
+
+@code {
+    // Enum must be defined in the same namespace or accessible globally
+    // We'll define it here for simplicity, but it should ideally be in a shared file.
+
+    // 1. Context Class to share state with the child page
+    public class StudentLayoutContext
+    {
+        // Property to hold the currently selected state
+        public ViewState SelectedView { get; set; } = ViewState.MyCourses;
+        
+        // Action to allow the child page to register its callback method
+        public Action<ViewState> ViewSelectedCallback { get; set; } = delegate { };
+    }
+
+    private StudentLayoutContext LayoutContext { get; set; } = new();
+
+    // 2. Method to update the state and notify the child page
+    private void HandleViewSelect(ViewState view)
+    {
+        // 1. Update the local state
+        LayoutContext.SelectedView = view;
+        
+        // 2. Notify the wrapped page (Student.razor) to update its internal state
+        LayoutContext.ViewSelectedCallback.Invoke(view);
+        
+        // No need for StateHasChanged here, the child page handles the re-render.
+    }
+
+    // 3. Helper method for dynamic Bootstrap styling
+    private string GetButtonClass(ViewState selection)
+    {
+        const string baseClass = "btn btn-lg rounded-pill mx-2 shadow-sm d-flex align-items-center";
+        
+        return LayoutContext.SelectedView == selection 
+            ? $"{baseClass} btn-primary"
+            : $"{baseClass} btn-outline-secondary";
+    }
+}

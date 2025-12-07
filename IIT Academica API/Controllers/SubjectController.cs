@@ -61,7 +61,7 @@ public class SubjectsController : ControllerBase
     // R E A D A L L (GET)
     // -------------------------------------------
     [HttpGet("getAll")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Student")]
     public async Task<ActionResult<IEnumerable<SubjectDTO>>> GetAllSubjects()
     {
         var entities = await Repository.GetAllWithTeacherAndEnrollmentsAsync();
