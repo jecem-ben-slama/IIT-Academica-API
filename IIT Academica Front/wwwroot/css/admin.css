@@ -1,478 +1,612 @@
-/* ========================================================================== */
-/*                               ADMIN SIDEBAR                                */
-/* ========================================================================== */
-
-.sidebar,
-.sidebar-wrapper
+/*? NAVBAR */
+:root
 {
-    background-color: #343a40 !important;
-    border-right: 1px solid rgba(0, 0, 0, 0.15);
+    --color-primary: #007bff;
+    /* Blue (for Users) */
+    --color-subjects: #28a745;
+    /* Green */
+    --color-notifications: #ffc107;
+    /* Yellow/Orange */
+    --color-text-dark: #343a40;
+    --color-background-light: #f8f9fa;
+    --color-border-subtle: #e9ecef;
+}
+
+/* Base layout styling */
+.modern-admin-layout
+{
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--color-background-light);
     min-height: 100vh;
 }
 
-.sidebar-wrapper
+/* Header Styling */
+.modern-admin-layout header
 {
-    width: 250px;
-    flex-shrink: 0;
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--color-border-subtle) !important;
 }
 
-/* --- NavLink Styling --- */
-.sidebar .nav-link,
-.sidebar-wrapper .nav-link
+.modern-admin-layout h2
 {
-    color: #ced4da !important;
-    padding: 0.75rem 1rem;
-    margin-bottom: 0.5rem;
-    border-radius: 0.5rem;
-    font-weight: 500;
-    transition: background-color 0.25s ease, color 0.25s ease, transform 0.15s;
-}
-
-.sidebar .nav-link:hover,
-.sidebar-wrapper .nav-link:hover
-{
-    background-color: #495057;
-    color: #fff !important;
-    transform: translateX(3px);
-}
-
-.sidebar .nav-link.active,
-.sidebar-wrapper .nav-link.active
-{
-    background-color: #1b6ec2 !important;
-    color: white !important;
     font-weight: 600;
+    color: var(--color-text-dark);
 }
 
-/* Page content expands fully */
-#page-content-wrapper
+/* Secondary Navbar (View Selector) */
+.sub-navbar
 {
-    width: 100%;
-    min-width: 0;
+    position: sticky;
+    top: 0;
+    /* Adjust if you have a sticky TopNavbar */
+    z-index: 1000;
 }
 
-.min-vh-100
+/* 🎯 MODIFICATION: Update the base class for centering */
+/* The parent element in the HTML is using d-flex and container-fluid. */
+/* You need to ensure the container itself is centered. */
+.sub-navbar .container-fluid
 {
-    min-height: 100vh;
+    /* Override the d-flex utility on the container that holds the buttons */
+    /* This will center the items regardless of screen size */
+    justify-content: center !important;
 }
 
 
-
-/* ========================================================================== */
-/*                               SKELETON LOADING                             */
-/* ========================================================================== */
-
-.skeleton-line
+/* Navigation Buttons */
+.nav-btn
 {
-    background-color: #e2e5e7;
-    height: 1em;
-    border-radius: 4px;
-    margin-bottom: 0.5em;
-    opacity: 0.7;
-    animation: pulse 1.5s infinite ease-in-out;
+    /* General modern button style */
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    /* Slightly rounded corners */
+    transition: all 0.2s ease-in-out;
+    border: 1px solid transparent;
+    color: var(--color-text-dark);
+    background-color: #ffffff;
 }
 
-/* Line lengths */
-.skeleton-line.tiny
+.nav-btn:hover
 {
-    width: 25%;
+    background-color: var(--color-border-subtle);
+    border-color: var(--color-border-subtle);
+    transform: translateY(-1px);
 }
 
-.skeleton-line.short
+/* Active Button Styles (Color Coding) */
+
+/* Active Users Button */
+.nav-btn.active-users,
+.nav-btn.active-users:hover
 {
-    width: 40%;
+    color: #ffffff;
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
 }
 
-.skeleton-line.medium
+/* Active Subjects Button */
+.nav-btn.active-subjects,
+.nav-btn.active-subjects:hover
 {
-    width: 65%;
+    color: #ffffff;
+    background-color: var(--color-subjects);
+    border-color: var(--color-subjects);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.2);
 }
 
-.skeleton-line.long
+/* Active Notifications Button */
+.nav-btn.active-notifications,
+.nav-btn.active-notifications:hover
 {
-    width: 90%;
+    color: var(--color-text-dark);
+    /* Keep dark text for better contrast on yellow */
+    background-color: var(--color-notifications);
+    border-color: var(--color-notifications);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.2);
 }
 
-/* Maintain table height */
-.skeleton-table tbody tr
+/* Adjustments for smaller screens: only show icons */
+@media (max-width: 768px)
 {
-    height: 3.5rem;
-}
-
-@keyframes pulse
-{
-    0%
+    /* ❌ REMOVED: This rule is now redundant as it's applied globally above. 
+    .sub-navbar .container-fluid 
     {
-        opacity: 0.7;
+        justify-content: center !important;
+    }
+    */
+
+    .nav-btn
+    {
+        padding: 0.5rem 0.75rem;
     }
 
-    50%
+    /* Hide the text label on small screens */
+    .nav-btn span
     {
-        opacity: 0.3;
-    }
-
-    100%
-    {
-        opacity: 0.7;
+        display: none !important;
     }
 }
 
-
-
-/* ========================================================================== */
-/*                                   MODALS                                   */
-/* ========================================================================== */
-
-.modal.d-block
-{
-    background-color: rgba(0, 0, 0, 0.6);
-}
-
-.modal-dialog
-{
-    max-width: 450px;
-    margin: 1.75rem auto;
-    transition: transform 0.3s ease-out;
-}
-
+/*! USER MODAL */
+/* Target the main modal content container */
 .modal-content
 {
-    border-radius: 12px;
+    /* Optional: Add a subtle shadow for depth, slightly stronger than default Bootstrap */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    border-radius: 0.75rem;
+    /* Smoother, rounded corners */
     border: none;
-    overflow: hidden;
-    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
 }
 
-/* Header */
-.modal-header
-{
-    background-color: var(--bs-primary, #0d6efd);
-    color: white;
-    padding: 1.5rem 2rem;
-    border-bottom: none;
-}
+/* --- Modal Header Customization --- */
 
-.modal-header .modal-title
-{
-    font-weight: 600;
-}
-
+/* Use a lighter color for the close button icon for better contrast */
 .btn-close-white
 {
-    filter: invert(1);
-    opacity: 0.8;
-    transition: opacity 0.2s;
-}
-
-.btn-close-white:hover
-{
     opacity: 1;
+    /* Ensure it's fully visible */
 }
 
-/* Body */
+/* Custom styling for the primary/warning header backgrounds */
+.modal-header.bg-primary
+{
+    background-color: #007bff !important;
+    /* Standard Primary color */
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+    padding: 1rem 1.5rem;
+    /* Increased padding */
+}
+
+.modal-header.bg-warning
+{
+    background-color: #ffc107 !important;
+    /* Standard Warning color */
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+    padding: 1rem 1.5rem;
+}
+
+/* --- Modal Body & Form Customization --- */
+
 .modal-body
 {
     padding: 1.5rem 2rem;
+    /* More generous padding inside the form area */
 }
 
-/* Form Fields */
+/* Style the form labels for a slightly better look */
 .form-label
 {
-    font-weight: 500;
-    color: #495057;
-    margin-bottom: 0.35rem;
+    font-weight: 600;
+    /* Make labels a bit bolder */
+    color: #343a40;
+    /* Darker text color */
+    margin-bottom: 0.3rem;
 }
 
+/* Enhance form controls (InputText, InputSelect) */
 .form-control,
 .form-select
 {
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    font-size: 0.95rem;
-    transition: border-color 0.25s, box-shadow 0.25s;
+    border-radius: 0.375rem;
+    /* Slightly rounded corners for inputs */
+    padding: 0.7rem 1rem;
+    /* Increase padding for a taller, more clickable field */
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 .form-control:focus,
 .form-select:focus
 {
-    border-color: var(--bs-primary, #0d6efd);
-    box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25);
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
 }
 
-/* Validation */
-.validation-message
+/* Style the validation messages to be clear but subtle */
+.validation-message,
+.text-danger
 {
-    color: var(--bs-danger, #dc3545);
-    font-size: 0.8rem;
-    margin-top: 0.35rem;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    display: block;
+    /* Ensure it takes its own line */
 }
 
-/* Footer */
+/* --- Feedback Messages (Alerts) --- */
+
+.alert-success,
+.alert-danger
+{
+    border-radius: 0.5rem;
+    padding: 0.8rem 1.2rem;
+    font-size: 0.95rem;
+}
+
+/* --- Modal Footer Customization --- */
+
 .modal-footer
 {
-    border-top: 1px solid #e9ecef;
-    padding: 1rem 2rem 1.5rem;
+    padding: 1rem 2rem;
+    border-top: 1px solid #dee2e6;
+    /* Subtle separator line */
 }
 
-.modal-footer .btn
+/* Style the primary/warning submit buttons */
+.btn-primary
 {
-    border-radius: 8px;
-    padding: 0.6rem 1.5rem;
+    /* Optional: Slightly darker primary color on hover/active */
+    background-color: #0069d9 !important;
+    border-color: #0062cc !important;
+}
+
+.btn-warning
+{
+    /* Ensure warning text is dark and visible against the light background */
+    color: #212529 !important;
+    background-color: #ffc107 !important;
+    border-color: #ffc107 !important;
+}
+
+.btn-warning:hover
+{
+    background-color: #e0a800 !important;
+    border-color: #d39e00 !important;
+}
+
+/* --- Disabled State (Crucial for a clean look) --- */
+
+/* Style disabled inputs to look clearly disabled */
+.form-control:disabled,
+.form-select:disabled
+{
+    background-color: #e9ecef;
+    /* Lighter background */
+    opacity: 0.8;
+}
+
+/* Optional: Improve the look of the ValidationSummary */
+.validation-summary-valid,
+.validation-summary-errors
+{
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    background-color: #f8d7da;
+    /* Light red background */
+    color: #721c24;
+    /* Dark red text */
+    border: 1px solid #f5c6cb;
+}
+
+/*! USER VIEW*/
+/* --- Global View Styling --- */
+/* (Assuming you use the optional 'user-management-container' wrapper) */
+/* .user-management-container {
+    padding: 2rem 0;
+} */
+
+/* 1. Limit the width of the main content area */
+.table-responsive
+{
+    /* Set a maximum width for the table container */
+    max-width: 1200px;
+    /* Adjust this value (e.g., 1000px, 1400px) based on your preference */
+    margin-left: auto;
+    /* Center the container */
+    margin-right: auto;
+    /* Center the container */
+    /* Add padding below the table for better spacing (already present) */
+    padding-bottom: 1rem;
+}
+
+/* --- Table Styling (Existing, but check for context) --- */
+
+.table.table-striped.table-hover
+{
+    width: 100%;
+    /* Ensure the table fills its new, limited container */
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border: 1px solid #dee2e6;
+}
+
+/* --- Controls Row Adjustment --- */
+
+/* 2. Apply the same width constraint to the controls row for alignment */
+.row.mb-5.align-items-center
+{
+    max-width: 1200px;
+    /* Must match the table's max-width */
+    margin-left: auto !important;
+    /* Center the controls */
+    margin-right: auto !important;
+    /* Center the controls */
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9ecef;
+    margin-bottom: 2rem !important;
+}
+
+/* 3. Apply the same width constraint to the error/info messages */
+.alert.mt-3
+{
+    max-width: 1200px;
+    /* Must match the table's max-width */
+    margin-left: auto !important;
+    margin-right: auto !important;
+
+    border-radius: 0.5rem;
+    padding: 1rem;
+    font-size: 1.05rem;
+    font-weight: 500;
+}
+
+/*! SUBJECT VIEW*/
+/* --- 1. Overall Layout & Header --- */
+
+.subject-management-container
+{
+    padding: 2rem 1rem;
+    /* Optional: Limit width and center for desktop views */
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+h3
+{
+    color: #007bff;
+    /* Primary color for the title */
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+    margin-bottom: 1.5rem;
     font-weight: 600;
-    transition: transform 0.1s, box-shadow 0.1s;
 }
 
-.modal-footer .btn-primary
+/* --- 2. Controls Section (Search & Button) --- */
+
+.d-flex.justify-content-between.align-items-center.mb-3
 {
-    background-color: var(--bs-primary, #0d6efd);
-    border-color: var(--bs-primary, #0d6efd);
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f8f9fa;
+    /* Subtle separation */
 }
 
-.modal-footer .btn-primary:active,
-.modal-footer .btn-secondary:active
+/* Enhance the look of the search input */
+.input-group>.form-control
 {
-    transform: translateY(1px);
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    padding: 0.5rem 0.75rem;
+    height: 38px;
+    /* Match button height */
 }
 
-.modal-footer .btn-secondary
+.input-group-text
 {
     background-color: #f8f9fa;
-    color: #495057;
-    border: 1px solid #ced4da;
+    color: #6c757d;
+    border-right: none;
+    height: 38px;
 }
 
+/* --- 3. Subject Table Styling --- */
 
-
-/* ========================================================================== */
-/*                          DASHBOARD ACTION BUTTONS                          */
-/* ========================================================================== */
-
-.action-rect-btn
+.table-responsive
 {
-    width: 160px;
-    height: 90px;
-    border-radius: 14px;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-
-    color: white !important;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-top: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    /* Subtle lift */
+    border-radius: 0.75rem;
+    overflow: hidden;
+    /* Important for clean rounded corners */
 }
 
-.action-rect-btn:hover
+.table.table-striped.table-hover
 {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 14px rgba(0, 0, 0, 0.15);
+    margin-bottom: 0;
+    /* Remove default table margin */
 }
 
-.action-rect-btn i
+.table thead
 {
-    font-size: 2rem;
-    margin-bottom: 5px;
+    background-color: #007bff;
+    /* Primary color header */
+    color: white;
 }
 
-.action-rect-btn .btn-label
+.table thead th
+{
+    padding: 0.75rem 1.2rem;
+    font-weight: 600;
+    border-bottom: none;
+    vertical-align: middle;
+}
+
+.table tbody td
+{
+    padding: 0.75rem 1.2rem;
+    vertical-align: middle;
+    font-size: 0.95rem;
+}
+
+.table tbody tr:hover
+{
+    background-color: #e9f5ff;
+    /* Lighter blue hover for primary feel */
+}
+
+/* Special styling for the Code column */
+.table tbody td:nth-child(2) strong
+{
+    color: #343a40;
+    font-weight: 700;
+}
+
+/* --- 4. Action Buttons --- */
+
+.btn-sm
 {
     font-size: 0.8rem;
-    font-weight: 500;
+    padding: 0.2rem 0.6rem;
+    margin-left: 0.25rem;
+    border-radius: 0.25rem;
 }
 
-
-
-/* ========================================================================== */
-/*                         FILTER BUTTONS + ICON BUTTONS                      */
-/* ========================================================================== */
-
-.filter-btn
+/* Adjust colors for Edit/Info and Delete/Danger */
+.btn-info
 {
-    padding: 10px 20px;
-    border-radius: 10px;
-    border: 2px solid #0d6efd;
-    background: white;
-    cursor: pointer;
-    font-weight: 500;
-    transition: 0.25s ease-in-out;
+    background-color: #17a2b8;
+    border-color: #17a2b8;
 }
 
-.filter-btn:hover
+.btn-info:hover
 {
-    background: #e8f0ff;
+    background-color: #138496;
+    border-color: #117a8b;
 }
 
-.active-filter
+/* --- 5. Modal Form Styling --- */
+
+/* Match modal background to previous form for consistency */
+.modal-content
 {
-    background: #0d6efd !important;
-    color: white !important;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
 
-.icon-btn
+.modal-header
 {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    border: 2px solid #0d6efd;
-    background: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    cursor: pointer;
-    transition: 0.25s ease;
+    background-color: #007bff;
+    color: white;
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-bottom: none;
 }
 
-.icon-btn:hover
+/* Use a simple close button with good contrast */
+.modal-header .close
 {
-    background: #e8f0ff;
-}
-
-.add-btn
-{
-    border-color: #198754;
-}
-
-.add-btn:hover
-{
-    background: #d7f7e3;
-}
-
-.action-active
-{
-    outline: 3px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25) !important;
-    transform: translateY(-4px) !important;
-}
-
-/* Rectangular Filter Buttons */
-.action-rect-btn
-{
-    width: 140px;
-    height: 80px;
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s, box-shadow 0.2s, border 0.2s;
-    color: white !important;
-}
-
-.action-rect-btn:hover
-{
-    transform: translateY(-3px);
-    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
-}
-
-.action-rect-btn i
-{
-    font-size: 1.8rem;
-    margin-bottom: 5px;
-}
-
-.action-rect-btn .btn-label
-{
+    font-size: 1.5rem;
+    font-weight: 300;
+    opacity: 1;
+    color: white;
+    padding: 0;
     margin: 0;
+}
+
+.modal-body
+{
+    padding: 1.5rem;
+}
+
+.form-group label
+{
+    font-weight: 600;
+    color: #343a40;
+}
+
+.form-control
+{
+    border-radius: 0.375rem;
+}
+
+.modal-footer
+{
+    border-top: 1px solid #dee2e6;
+    padding: 1rem 1.5rem;
+}
+
+/* Styling for messages */
+.text-danger
+{
+    font-size: 0.9rem;
+}
+
+/* --- Modal Form Body Enhancements --- */
+
+.modal-body
+{
+    padding: 1.5rem;
+    /* Ensure generous padding inside the modal */
+}
+
+/* Style the form labels for better clarity */
+.form-group label
+{
+    font-weight: 600;
+    /* Bolder label text */
+    color: #343a40;
+    /* Darker text */
+    margin-bottom: 0.3rem;
+    display: block;
+    /* Ensures it takes full width */
+}
+
+/* Enhance form controls (InputText, InputSelect, InputNumber) */
+.form-control,
+.form-select
+{
+    /* Apply uniform, slightly rounded corners */
+    border-radius: 0.375rem;
+    /* Increase vertical padding for a taller, more modern look */
+    padding: 0.65rem 0.75rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+/* Focus state enhancement */
+.form-control:focus,
+.form-select:focus
+{
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Style the ValidationSummary box */
+.validation-summary-valid,
+.validation-summary-errors
+{
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    background-color: #f8d7da;
+    /* Light red background for errors */
+    color: #721c24;
+    /* Dark red text */
+    border: 1px solid #f5c6cb;
+    font-size: 0.95rem;
+}
+
+/* Teacher Select Specific Styling */
+#teacherSelect
+{
+    cursor: pointer;
+}
+
+/* Error message below the form fields */
+.text-danger.mt-2
+{
     font-size: 0.9rem;
     font-weight: 500;
 }
 
-/* Active State for Filter Buttons (Highlight border/scale) */
-.action-active
+/* Adjust the modal footer buttons */
+.modal-footer
 {
-    border: 3px solid #ffc107 !important;
-    /* Gold border to indicate selection */
-    transform: scale(1.05);
-    box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
+    border-top: 1px solid #dee2e6;
+    padding: 1rem 1.5rem;
+    justify-content: flex-end;
+    /* Push buttons to the right */
 }
 
-/* Target the container for search and filter */
-.row.mb-4.align-items-center.justify-content-between .col-md-6.d-flex.gap-2
-{
-    /* Ensures the row elements are positioned correctly */
-    display: flex;
-    align-items: center;
-}
-
-/* Target the select element specifically */
-.row.mb-.align-items-center.justify-content-between .col-md-6.d-flex.gap-2 .form-select
-{
-    /* Reduce the width of the dropdown to a more sensible size */
-    width: 180px !important;
-    /* Adjust as needed */
-
-    /* Ensure height matches the search input (form-control) */
-    height: calc(1.5em + .75rem + 2px);
-    /* Standard Bootstrap height */
-
-    /* You may want to add custom styling here for border, background, etc. */
-    border-radius: .25rem;
-    box-shadow: none;
-}
-
-/* Ensure the search bar takes up the remaining space */
-.row.mb-4.align-items-center.justify-content-between .col-md-6.d-flex.gap-2 .form-control
-{
-    flex-grow: 1;
-}
-
-/* If the user list is the only item in the column, ensure it stretches */
-/* This targets the column wrapping the search and filter */
-.col-md-6.mb-3.mb-md-0
-{
-    flex-grow: 1;
-}
-
-/* If you need to increase the font size of the table header */
-.table thead th
+.modal-footer .btn-primary,
+.modal-footer .btn-secondary
 {
     font-weight: 600;
-    font-size: 1rem;
 }
 
-/* Add this CSS for the Loading Skeleton animation */
-.skeleton-box
-{
-    display: inline-block;
-    height: 1em;
-    /* Adjust as needed */
-    position: relative;
-    overflow: hidden;
-    background-color: #f6f7f8;
-    /* Light gray base */
-    border-radius: 4px;
-}
-
-.skeleton-box::after
-{
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    transform: translateX(-100%);
-    background-image: linear-gradient(90deg,
-            rgba(255, 255, 255, 0) 0,
-            rgba(255, 255, 255, 0.5) 20%,
-            rgba(255, 255, 255, 0) 60%);
-    animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer
-{
-    100%
-    {
-        transform: translateX(100%);
-    }
-}
-
-.skeleton-text
-{
-    height: 16px;
-    margin: 5px 0;
-}
+/*! NOTIFICATION VIEW

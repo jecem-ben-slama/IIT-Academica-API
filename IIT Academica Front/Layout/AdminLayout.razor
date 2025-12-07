@@ -1,40 +1,41 @@
 @inherits LayoutComponentBase
 
-<!-- Top navbar component -->
 <TopNavbar />
 
-<!-- Cascading layout context for secondary navbar and page content -->
 <CascadingValue Value="LayoutContext" IsFixed="false">
-<br>
-<h2>📚 Admin Dashboard</h2>
-    <!-- Secondary navbar: View selector buttons -->
-    <nav class="sub-navbar bg-white border-bottom py-3">
-        <div class="container-fluid d-flex justify-content-center flex-wrap gap-4">
 
-            <button class="btn btn-secondary action-rect-btn d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "" ? "action-active-secondary" : "")"
-                    @onclick="@(() => HandleRoleSelect(""))" title="All Users">
-                <i class="bi bi-people-fill fs-4"></i>
-                <span>Users</span>
-            </button>
+    <div class="modern-admin-layout">
+        <header class="p-4 border-bottom">
+            <h2 class="h1 mb-0 text-dark-emphasis">📚 Admin Dashboard</h2>
+        </header>
 
-            <button class="btn btn-info text-white action-rect-btn d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "Subjects" ? "action-active-info" : "")"
-                    @onclick="@(() => HandleRoleSelect("Subjects"))" title="Subjects">
-                <i class="bi bi-book fs-4"></i>
-                <span>Subjects</span>
-            </button>
+        <nav class="sub-navbar bg-white shadow-sm">
+            <div class="container-fluid py-3 px-4 d-flex justify-content-start flex-wrap gap-3">
 
-            <button class="btn btn-warning action-rect-btn d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "Notifications" ? "action-active-warning" : "")"
-                    @onclick="@(() => HandleRoleSelect("Notifications"))" title="Notifications">
-                <i class="bi bi-bell-fill fs-4"></i>
-                <span>Notifications</span>
-            </button>
+                <button class="nav-btn btn btn-light d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "" ? "active-users" : "")"
+                        @onclick="@(() => HandleRoleSelect(""))" title="All Users">
+                    <i class="bi bi-people-fill fs-5"></i>
+                    <span class="d-none d-md-inline">Users</span>
+                </button>
 
-        </div>
-    </nav>
+                <button class="nav-btn btn btn-light d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "Subjects" ? "active-subjects" : "")"
+                        @onclick="@(() => HandleRoleSelect("Subjects"))" title="Subjects">
+                    <i class="bi bi-book fs-5"></i>
+                    <span class="d-none d-md-inline">Subjects</span>
+                </button>
 
-    <!-- Page content -->
-    <div class="container-fluid p-4">
-        @Body
+                <button class="nav-btn btn btn-light d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "Notifications" ? "active-notifications" : "")"
+                        @onclick="@(() => HandleRoleSelect("Notifications"))" title="Notifications">
+                    <i class="bi bi-bell-fill fs-5"></i>
+                    <span class="d-none d-md-inline">Notifications</span>
+                </button>
+
+            </div>
+        </nav>
+
+        <main class="container-fluid p-4">
+            @Body
+        </main>
     </div>
 
 </CascadingValue>

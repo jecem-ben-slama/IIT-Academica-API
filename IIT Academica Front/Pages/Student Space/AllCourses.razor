@@ -1,51 +1,65 @@
-@* This component displays the list of all available subjects.
-*@
+@* This component displays the list of all available subjects. *@
 @using IIT_Academica_DTOs.Enrollment_DTOs
 
-<div class="card shadow-sm h-100">
-    <div class="card-header bg-primary text-white">
-        <h4 class="mb-0">Available Subjects 📖</h4>
+<div class="card shadow-lg h-100 available-subjects-widget">
+    <div class="card-header bg-dark text-white">
+        <h4 class="mb-0 fw-bold">
+            <i class="bi bi-book-half me-2"></i> Available Subjects
+        </h4>
     </div>
-    <div class="card-body">
+    <div class="card-body p-0">
+        @* --- Loading State --- *@
         @if (IsLoadingAllSubjects)
         {
-            <p class="text-center"><span class="spinner-border spinner-border-sm"></span> Loading available subjects...</p>
+            <div class="text-center p-4">
+                <div class="spinner-border text-dark" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading available subjects...</p>
+            </div>
         }
+        @* --- Empty State --- *@
         else if (AvailableSubjects == null || !AvailableSubjects.Any())
         {
-    
-         <div class="alert alert-warning">No subjects are currently available for enrollment.</div>
+            <div class="alert alert-warning text-center m-3 p-4 border-dark" role="alert">
+                <i class="bi bi-exclamation-triangle-fill fs-4 text-warning d-block mb-2"></i>
+                <p class="mb-0 fw-semibold">No subjects are currently available for enrollment.</p>
+                <small class="text-muted">Please check back later.</small>
+            </div>
         }
+        @* --- Subject List --- *@
         else
         {
-            <ul class="list-group list-group-flush">
+            <ul class="list-group list-group-flush subject-list">
                 @foreach (var subject in AvailableSubjects)
                 {
-          
-           // Determine if the student is enrolled in this subject
-                    bool isEnrolled = EnrolledCourses?.Any(c => c.SubjectId == subject.Id) ??
-false;
+                    // Determine if the student is enrolled in this subject
+                    bool isEnrolled = EnrolledCourses?.Any(c => c.SubjectId == subject.Id) ?? false;
 
-                    <li class="list-group-item d-flex justify-content-between align-items-center @(isEnrolled ? "list-group-item-light" : "")">
+                    <li class="list-group-item d-flex justify-content-between align-items-center p-3 
+                        @(isEnrolled ? "enrolled-item list-group-item-secondary" : "available-item")">
+                        
                         <div>
-                            <span class="fw-bold">@subject.SubjectName</span>
-                            <small class="text-muted d-block">ID: @subject.Id</small>
-      
-                   </div>
+                            <span class="fw-bold @(isEnrolled ? "text-muted" : "text-dark")">
+                                @subject.SubjectName
+                            </span>
+                            <small class="text-muted d-block">Section: @subject.Id</small>
+                        </div>
+                        
                         @if (isEnrolled)
                         {
-                            <span class="badge bg-success">Enrolled</span>
-   
-                         }
+                            <span class="badge bg-success enrolled-tag">
+                                <i class="bi bi-check-circle-fill me-1"></i> Enrolled
+                            </span>
+                        }
                         else
                         {
-                            <button class="btn btn-sm 
-btn-primary" @onclick="() => OnEnrollmentRequested.InvokeAsync(subject)">
-                                Enroll
+                            <button class="btn btn-sm btn-primary enroll-button" 
+                                    @onclick="() => OnEnrollmentRequested.InvokeAsync(subject)">
+                                <i class="bi bi-plus-circle-fill me-1"></i> Enroll
                             </button>
                         }
-             
-        </li>
+                    </li>
                 }
             </ul>
         }
@@ -55,21 +69,17 @@ btn-primary" @onclick="() => OnEnrollmentRequested.InvokeAsync(subject)">
 @code {
     // Parameter to receive the list of all available subjects
     [Parameter]
-    public List<SubjectDTO>?
-AvailableSubjects { get; set; }
+    public List<SubjectDTO>? AvailableSubjects { get; set; }
 
     // Parameter to receive the list of enrolled courses (for comparison)
     [Parameter]
-    public List<StudentCourseDto>?
-EnrolledCourses { get; set; }
+    public List<StudentCourseDto>? EnrolledCourses { get; set; }
 
     // Parameter to receive the loading state from the parent
     [Parameter]
-    public bool IsLoadingAllSubjects { get;
-set; } = true;
+    public bool IsLoadingAllSubjects { get; set; } = true;
 
     // EventCallback to notify the parent when an enrollment is requested (to show the modal)
     [Parameter]
-    public EventCallback<SubjectDTO> OnEnrollmentRequested { get;
-set; }
+    public EventCallback<SubjectDTO> OnEnrollmentRequested { get; set; }
 }

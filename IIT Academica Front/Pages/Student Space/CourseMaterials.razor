@@ -8,40 +8,44 @@
 
 <div class="container p-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>📚 Course Materials for @SubjectName</h2>
-        <button class="btn btn-secondary" @onclick="GoBack">
-            <i class="bi bi-arrow-left"></i> Back to Courses
+    <div class="d-flex justify-content-between align-items-center mb-5 pb-3 border-bottom">
+        <h2 class="fw-bold text-primary">
+            <i class="bi bi-journal-check me-2"></i> Course Materials for @SubjectName
+        </h2>
+        <button class="btn btn-outline-secondary" @onclick="GoBack">
+            <i class="bi bi-arrow-left me-2"></i> Back to Courses
         </button>
     </div>
 
     @* --- Loading State --- *@
     @if (IsLoading)
     {
-        <div class="text-center p-5">
-            <div class="spinner-border text-primary" role="status">
+        <div class="text-center p-5 border rounded-3 bg-light">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                 <span class="visually-hidden">Loading...</span>
             </div>
-            <p class="mt-2">Loading course materials...</p>
+            <p class="mt-3 fs-5 text-muted">Loading course materials...</p>
         </div>
     }
 
     @* --- Error State --- *@
     else if (LoadingError != null)
     {
-        <div class="alert alert-danger" role="alert">
-            <h4 class="alert-heading">Loading Failed!</h4>
-            <p>Could not load materials for the subject. Details: @LoadingError</p>
-            <button class="btn btn-sm btn-outline-danger mt-2" @onclick="LoadMaterialsAsync">Retry</button>
+        <div class="alert alert-danger p-4 shadow-sm" role="alert">
+            <h4 class="alert-heading d-flex align-items-center"><i class="bi bi-x-octagon-fill me-2"></i> Loading Failed!</h4>
+            <p>Could not load materials for the subject. Details: **@LoadingError**</p>
+            <hr>
+            <button class="btn btn-sm btn-danger mt-2" @onclick="LoadMaterialsAsync"><i class="bi bi-arrow-clockwise me-1"></i> Retry</button>
         </div>
     }
 
     @* --- Data Display State --- *@
     else if (Materials == null || Materials.Count == 0)
     {
-        <div class="alert alert-info text-center" role="alert">
-            <i class="bi bi-info-circle fs-4 me-2"></i>
-            There are no course materials available for this subject yet.
+        <div class="alert alert-info text-center p-4 shadow-sm" role="alert">
+            <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
+            <h5 class="alert-heading">No Materials Available</h5>
+            <p class="mb-0">There are no course materials available for this subject yet.</p>
         </div>
     }
     else
@@ -50,20 +54,23 @@
             @foreach (var material in Materials)
             {
                 <div class="col">
-                    <div class="card h-100 shadow-sm border-primary">
+                    <div class="material-card h-100 shadow-sm border-primary">
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title text-primary">
+                            <h5 class="card-title text-primary fw-bold">
                                 <i class="bi bi-file-earmark-text me-2"></i> @material.Title
                             </h5>
-                            <h6 class="card-subtitle mb-2 text-muted">Uploaded: @material.UploadDate.ToShortDateString()</h6>
-                            <p class="card-text flex-grow-1">@material.Description</p>
+                            <h6 class="card-subtitle mb-3 text-muted">Uploaded: @material.UploadDate.ToShortDateString()</h6>
+                            <p class="card-text flex-grow-1 text-secondary">@material.Description</p>
                             
-                            <div class="mt-3">
-                                <button class="btn btn-success w-100" @onclick="() => DownloadMaterial(material)">
+                            <div class="mt-auto pt-3 download-button-group">
+                                <button class="btn btn-success w-100" 
+                                        @onclick="() => DownloadMaterial(material)"
+                                        disabled="@(DownloadingMaterialId.HasValue && DownloadingMaterialId != material.Id)">
+
                                     @if (material.Id == DownloadingMaterialId)
                                     {
-                                        <span class="spinner-border spinner-border-sm me-2">  Downloading...</span>
-                                      
+                                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        <span class="fw-bold">Downloading...</span>
                                     }
                                     else
                                     {
@@ -79,6 +86,21 @@
     }
 
 </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @code {
     // Parameter passed via the route (e.g., /student/materials/10)

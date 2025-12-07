@@ -1,0 +1,208 @@
+/*! ssubject materials
+/* Container & Header */
+.container
+{
+    max-width: 1200px;
+}
+
+.border-bottom
+{
+    border-color: #007bff !important;
+    /* Use primary color for separation */
+}
+
+/* Material Card Styling */
+.material-card
+{
+    border: 1px solid #e9ecef;
+    border-left: 5px solid #007bff;
+    /* Primary color emphasis on the left border */
+    border-radius: 0.75rem;
+    transition: box-shadow 0.3s ease, background-color 0.3s ease;
+    background-color: #ffffff;
+}
+
+.material-card:hover
+{
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.material-card .card-title
+{
+    font-size: 1.15rem;
+    display: flex;
+    align-items: center;
+}
+
+.material-card .card-text
+{
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: #495057 !important;
+}
+
+.material-card .card-subtitle
+{
+    font-size: 0.85rem;
+}
+
+/* Download Button Group (to handle loading/downloading state) */
+.download-button-group .btn-success
+{
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+
+.download-button-group .btn[disabled]
+{
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Error/Info States */
+.alert-heading i
+{
+    font-size: 1.5rem;
+}
+
+.alert-info
+{
+    border-left: 5px solid #0dcaf0;
+}
+
+.alert-danger
+{
+    border-left: 5px solid #dc3545;
+}
+
+/*! mycourses
+
+/* --- Widget Container --- */
+.enrolled-courses-widget
+{
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+/* Header customization */
+.enrolled-courses-widget .card-header.bg-info
+{
+    /* Slightly darker shade for better readability */
+    background-color: #0dcaf0 !important;
+    border-bottom: 3px solid #007bff;
+    /* Accent color border */
+}
+
+.enrolled-courses-widget .card-header h4
+{
+    font-size: 1.3rem;
+}
+
+/* --- Course List Items --- */
+.course-list .list-group-item
+{
+    border-left: 3px solid transparent;
+    /* Prepare for hover effect */
+    transition: background-color 0.2s ease, border-left 0.2s ease;
+}
+
+.course-list .list-group-item:hover
+{
+    background-color: #f7f9fc;
+    /* subtle highlight on hover */
+    border-left: 3px solid #007bff;
+    /* Primary color accent on hover */
+}
+
+/* Make the course title area clearly clickable */
+.course-link-area
+{
+    flex-grow: 1;
+    cursor: pointer;
+    padding-right: 1rem;
+    /* Spacing before the button */
+}
+
+.course-link-area .course-title
+{
+    transition: color 0.15s ease;
+}
+
+.course-link-area:hover .course-title
+{
+    color: #007bff !important;
+    /* Primary color on hover */
+    text-decoration: underline;
+}
+
+/* Drop Button consistency */
+.drop-button
+{
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/*! allcourses
+/* --- Widget Container --- */
+.available-subjects-widget
+{
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border: 1px solid #dee2e6;
+}
+
+/* Header customization */
+.available-subjects-widget .card-header.bg-dark
+{
+    /* Use a dark, professional header color */
+    background-color: #212529 !important;
+    border-bottom: 3px solid #007bff;
+    /* Primary color accent */
+}
+
+.available-subjects-widget .card-header h4
+{
+    font-size: 1.3rem;
+}
+
+/* --- Subject List Items --- */
+.subject-list .list-group-item
+{
+    transition: background-color 0.2s ease;
+}
+
+/* Style for items available for enrollment */
+.available-item:hover
+{
+    background-color: #f8f9fa;
+    /* subtle highlight on hover */
+}
+
+/* Style for already enrolled items */
+.enrolled-item
+{
+    background-color: #f0f2f5 !important;
+    border-left: 5px solid #198754;
+    /* Success color border */
+    opacity: 0.85;
+}
+
+.enrolled-tag
+{
+    font-weight: 600;
+    padding: 0.5em 0.75em;
+    border-radius: 0.5rem;
+}
+
+/* Enroll button CTA enhancement */
+.enroll-button
+{
+    font-weight: 500;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.enroll-button:hover
+{
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3);
+}

@@ -113,3 +113,82 @@ input::file-selector-button
     border: none;
     color: white;
 }
+
+/* Custom Card Style for Teacher Dashboard */
+.subject-card-enhanced
+{
+    border: 1px solid #e9ecef;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+    background-color: #ffffff;
+}
+
+/* Hover effect */
+.subject-card-enhanced:hover
+{
+    transform: translateY(-5px);
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175) !important;
+    background-color: #f8f9fa;
+    /* Slightly lighter on hover */
+}
+
+.subject-card-enhanced .card-body
+{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.subject-card-enhanced .card-title
+{
+    font-size: 1.25rem;
+    color: #007bff;
+    /* Use primary color for title */
+}
+
+.subject-card-enhanced .card-footer
+{
+    padding-top: 0;
+    background-color: #f7f9fc;
+    /* Light background for the footer */
+    border-top: 1px solid #dee2e6;
+}
+
+/* Manage Button Style - Enhanced visual link */
+.btn-manage-action
+{
+    background-color: transparent;
+    color: #007bff;
+    border: 1px solid #007bff;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-manage-action:hover
+{
+    background-color: #007bff;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0, 123, 255, 0.3);
+}
+
+/* Header Styling */
+.text-primary
+{
+    color: #007bff !important;
+}
+
+.badge.bg-primary-subtle
+{
+    background-color: #cfe2ff !important;
+    color: #084298 !important;
+    font-size: 0.9rem;
+    padding: 0.5em 0.75em;
+}
+
+/* Error/Info States */
+.alert-heading i
+{
+    font-size: 1.5rem;
+}

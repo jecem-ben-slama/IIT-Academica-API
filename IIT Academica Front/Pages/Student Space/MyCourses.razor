@@ -2,32 +2,48 @@
 @using IIT_Academica_DTOs.Enrollment_DTOs
 @inject NavigationManager Navigation
 
-<div class="card shadow-sm h-100">
-    <div class="card-header bg-success text-white">
-        <h4 class="mb-0">My Enrolled Courses 🎯</h4>
+<div class="card shadow-lg h-100 enrolled-courses-widget">
+    <div class="card-header bg-info text-white">
+        <h4 class="mb-0 fw-bold">
+            <i class="bi bi-bookmark-check-fill me-2"></i> My Enrolled Courses
+        </h4>
     </div>
-    <div class="card-body">
+    <div class="card-body p-0">
+        @* --- Loading State --- *@
         @if (IsLoadingMyCourses)
         {
-            <p class="text-center"><span class="spinner-border spinner-border-sm"></span> Loading your courses...</p>
+            <div class="text-center p-4">
+                <div class="spinner-border text-info" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading your courses...</p>
+            </div>
         }
+        @* --- Empty State --- *@
         else if (EnrolledCourses == null || !EnrolledCourses.Any())
         {
-            <div class="alert alert-info">You are not currently enrolled in any subjects.</div>
+            <div class="alert alert-light text-center m-3 p-4 border-info" role="alert">
+                <i class="bi bi-exclamation-circle-fill fs-4 text-info d-block mb-2"></i>
+                <p class="mb-0 fw-semibold">You are not currently enrolled in any subjects.</p>
+                <small class="text-muted">Explore the 'Available Courses' section to enroll.</small>
+            </div>
         }
+        @* --- Course List --- *@
         else
         {
-            <ul class="list-group list-group-flush">
+            <ul class="list-group list-group-flush course-list">
                 @foreach (var course in EnrolledCourses)
                 {
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div class="course-link" @onclick="() => NavigateToMaterials(course.SubjectId)" role="button" title="View Course Materials">
-                            <span class="fw-bold text-primary course-title">@course.CourseTitle</span>
-                            @* Optional: Display other details like teacher or date *@
-                            @* <small class="text-muted d-block">Enrolled on: @course.EnrollmentDate.ToShortDateString()</small> *@
+                    <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                        
+                        <div class="course-link-area" @onclick="() => NavigateToMaterials(course.SubjectId)" role="button" title="View Course Materials">
+                            <i class="bi bi-book-fill me-2 text-info"></i>
+                            <span class="fw-bold course-title text-dark">@course.CourseTitle</span>
+                            <small class="text-muted d-block ms-4">ID: @course.SubjectId</small>
                         </div>
-                        <button class="btn btn-sm btn-outline-danger" @onclick="() => OnDropCourse.InvokeAsync(course)">
-                            Drop
+                        
+                        <button class="btn btn-sm btn-outline-danger drop-button" @onclick="() => OnDropCourse.InvokeAsync(course)">
+                            <i class="bi bi-box-arrow-right"></i> Drop
                         </button>
                     </li>
                 }
@@ -37,38 +53,17 @@
 </div>
 
 @code {
-    // Parameter to receive the list of enrolled courses from the parent (Student.razor)
     [Parameter]
     public List<StudentCourseDto>? EnrolledCourses { get; set; }
 
-    // Parameter to receive the loading state from the parent
     [Parameter]
     public bool IsLoadingMyCourses { get; set; } = true;
 
-    // EventCallback to notify the parent when the Drop button is clicked
     [Parameter]
     public EventCallback<StudentCourseDto> OnDropCourse { get; set; }
 
-    /// <summary>
-    /// Navigates the user to the Course Materials page for the selected subject.
-    /// </summary>
-    /// <param name="subjectId">The ID of the subject whose materials are to be viewed.</param>
     private void NavigateToMaterials(int subjectId)
     {
-        // Navigates to the route defined as /student/materials/{SubjectId:int}
         Navigation.NavigateTo($"/student/materials/{subjectId}");
     }
 }
-
-<style>
-    /* Add a little style to make the course title look clickable */
-    .course-link {
-        cursor: pointer;
-        transition: color 0.1s;
-    }
-
-    .course-link:hover .course-title {
-        color: var(--bs-indigo) !important; /* Use a hover color */
-        text-decoration: underline;
-    }
-</style>

@@ -3,113 +3,96 @@
 @inject AuthService AuthService
 @inject NavigationManager NavigationManager
 
-<div class="login-layout">
- 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
+<link href="css/login.css" rel="stylesheet" />
 
-        <div class="login-right">
-        <div class="login-card">
+<div class="login-wrapper">
 
-            <p class="text-muted small-title">Please enter your details</p>
-            <h2 class="welcome-title">Welcome back</h2>
+    <div class="login-card shadow-lg">
 
-            <EditForm Model="@loginDto" OnValidSubmit="HandleLogin">
-                <DataAnnotationsValidator />
+        <div class="text-center mb-4">
+            <h1 class="title">Welcome Back</h1>
+            <p class="subtitle">Please enter your credentials to continue</p>
+        </div>
 
-                <div class="form-group mt-4">
-                    <label>Email address</label>
-                    <InputText class="form-control modern-input" @bind-Value="loginDto.Email" />
-                </div>
+        <EditForm Model="@loginDto" OnValidSubmit="HandleLogin">
+            <DataAnnotationsValidator />
 
-                <div class="form-group mt-3">
-                    <label>Password</label>
-                    
-                    @* --- Password Input Group with Toggle --- *@
-                    <div class="input-group">
-                        <InputText type="@(showPassword ? "text" : "password")" 
-                            class="form-control modern-input" 
-                            @bind-Value="loginDto.Password" />
-                        
-                        <button type="button" class="btn btn-outline-secondary" @onclick="TogglePasswordVisibility">
-                            @* Change icon based on state (using standard Open Iconic classes) *@
-                            <span class="@(showPassword ? "oi oi-eye" : "oi oi-lock-unlocked")" aria-hidden="true"></span>
-                        </button>
-                    </div>
-                    @* --- End Password Input Group --- *@
+            <div class="input-field">
+                <label>Email Address</label>
+                <InputText class="modern-input" @bind-Value="loginDto.Email" />
+            </div>
 
-                </div>
+            <div class="input-field mt-3">
+                <label>Password</label>
 
-               
-                @if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    <div class="alert alert-danger mt-3 text-center">
-                        @errorMessage
-                    </div>
-                }
+                <div class="password-wrapper">
 
-                <button type="submit" class="btn primary-btn w-100 mt-4" disabled="@isBusy">
-                    @if (isBusy)
-                    {
-                        <span class="spinner-border spinner-border-sm me-2"></span>
-                    }
-                    Loginn
-                </button>
+                    <InputText type="@(showPassword ? "text" : "password")"
+                               class="modern-input"
+                               @bind-Value="loginDto.Password" />
 
-               
-             
+                    <button type="button" class="toggle-password" @onclick="TogglePasswordVisibility">
+                        <i class="bi @(showPassword ? "bi-eye-slash" : "bi-eye")"></i>
+                    </button>
 
-            </EditForm>
-        </div>
-    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3 text-center">
+                    @errorMessage
+                </div>
+            }
+
+            <button type="submit" class="btn primary-btn w-100 mt-4" disabled="@isBusy">
+                @if (isBusy)
+                {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                }
+                Login
+            </button>
+
+        </EditForm>
+    </div>
+
 </div>
 
 @code {
-    private LoginDto loginDto = new();
-    private string? errorMessage;
-    private bool isBusy = false;
-    private bool rememberMe = false;
-    
-    // 🆕 New state variable for password visibility
+    private LoginDto loginDto = new();
+    private string? errorMessage;
+    private bool isBusy = false;
+
     private bool showPassword = false;
+    private void TogglePasswordVisibility() => showPassword = !showPassword;
 
-    // 🆕 New method to toggle the visibility state
-    private void TogglePasswordVisibility()
+    private async Task HandleLogin()
     {
-        showPassword = !showPassword;
+        errorMessage = null;
+        isBusy = true;
+
+        try
+        {
+            var auth = await AuthService.Login(loginDto.Email, loginDto.Password);
+            if (auth.IsSuccess)
+            {
+                NavigationManager.NavigateTo(auth.Role switch {
+                    "Student" => "/student",
+                    "Admin" => "/admin",
+                    "Teacher" => "/teacher",
+                }, true, true);
+            }
+            else
+                errorMessage = auth.Errors?.FirstOrDefault() ?? auth.Message;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isBusy = false;
+        }
     }
-
-    private async Task HandleLogin()
-    {
-        errorMessage = null;
-        isBusy = true;
-
-        try
-        {
-            var auth = await AuthService.Login(loginDto.Email, loginDto.Password);
-            if (auth.IsSuccess)
-            {
-    
-                NavigationManager.NavigateTo(
-                    auth.Role switch {
-                        
-                        "Student" => "/student",
-                        "Admin" => "/admin",
-                        "Teacher" => "/teacher",
-                        
-                    },
-                    forceLoad: true,
-                    replace: true
-                );
-            }
-            else
-                errorMessage = auth.Errors?.FirstOrDefault() ?? auth.Message;
-        }
-        catch (Exception ex)
-        {
-            errorMessage = ex.Message;
-        }
-        finally
-        {
-            isBusy = false;
-        }
-    }
 }

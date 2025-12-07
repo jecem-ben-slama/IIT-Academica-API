@@ -1,10 +1,10 @@
- @namespace NotificationsFeed
- @using IIT_Academica_Front.Models
+@namespace NotificationsFeed
+@using IIT_Academica_Front.Models
 @using IIT_Academica_Front.Services
 @inject NotificationService NotificationService
 @inject IJSRuntime JSRuntime
 
-<div class="p-0"> @* Removed container padding as the parent will provide it *@
+<div class="p-0">
     <h2 class="mb-4 text-primary">🔔 Campus Notification Feed</h2>
     <hr />
 
@@ -25,7 +25,6 @@
         <div class="alert alert-danger" role="alert">
             <h4 class="alert-heading">Connection Error</h4>
             <p>Could not load the notification feed. Details: @LoadingError</p>
-            @* Use the EventCallback to notify the parent to retry loading data *@
             <button class="btn btn-sm btn-outline-danger mt-2" @onclick="() => OnRetryLoading.InvokeAsync()">Retry Loading</button>
         </div>
     }
@@ -40,8 +39,60 @@
     }
     else
     {
+        @* ======================================================= *@
+        @* --- FEATURED NOTIFICATION: Latest "Emploi" --- *@
+        @* ======================================================= *@
+        @if (FeaturedNotification != null)
+        {
+            <div class="mb-4">
+                <h3 class="text-danger"><i class="bi bi-pin-angle-fill me-2"></i> Featured Announcement</h3>
+                <div class="card border-danger shadow-lg notification-card expanded"> @* Always expanded and highlighted *@
+                    
+                    @* Card Header *@
+                    <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-bullhorn me-2"></i> @FeaturedNotification.Title
+                        </h5>
+                        <span class="small">
+                            @FeaturedNotification.PostedDate.ToShortDateString()
+                        </span>
+                    </div>
+
+                    @* Card Body (Content) - Always displayed here *@
+                    <div class="card-body">
+                        
+                        @* Display Image if available (using FeaturedImageContent state) *@
+                        @if (!string.IsNullOrEmpty(FeaturedNotification.ImageUrl) && !string.IsNullOrEmpty(FeaturedImageContent))
+                        {
+                            <div class="text-center mb-3">
+                                <img src="data:image;base64,@FeaturedImageContent" class="img-fluid rounded" alt="Featured Notification Image" style="max-height: 350px; object-fit: cover;" />
+                            </div>
+                        }
+                        
+                        <p class="card-text">@FeaturedNotification.Content</p>
+
+                        @* Download Attached File Button *@
+                        @if (!string.IsNullOrEmpty(FeaturedNotification.FileUrl))
+                        {
+                            <button class="btn btn-sm btn-danger mt-3" 
+                                    @onclick="() => DownloadAttachedFile(FeaturedNotification.Id, FeaturedNotification.FileUrl)">
+                                <i class="bi bi-file-earmark-arrow-down-fill me-2"></i> 
+                                Download Attachment
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4"/>
+            <h3 class="mb-3 text-secondary">General Feed</h3>
+        }
+
+
+        @* ======================================================= *@
+        @* --- STANDARD NOTIFICATION FEED --- *@
+        @* ======================================================= *@
         <div class="row row-cols-1 g-3">
-            @foreach (var notification in Notifications.OrderByDescending(n => n.PostedDate))
+            @foreach (var notification in StandardNotifications.OrderByDescending(n => n.PostedDate))
             {
                 <div class="col">
                     <div class="card shadow-sm notification-card @(ExpandedNotificationId == notification.Id ? "expanded" : "")">
@@ -69,7 +120,6 @@
                                 @if (!string.IsNullOrEmpty(notification.ImageUrl) && !string.IsNullOrEmpty(ImageContent))
                                 {
                                     <div class="text-center mb-3">
-                                        @* Display the Base64 image content directly *@
                                         <img src="data:image;base64,@ImageContent" class="img-fluid rounded" alt="Notification Image" style="max-height: 300px; object-fit: cover;" />
                                     </div>
                                 }
@@ -109,24 +159,97 @@
     public EventCallback OnRetryLoading { get; set; }
 
     // --- Component Internal State ---
+    
+    // State for standard collapsible cards
     private int? ExpandedNotificationId { get; set; }
     private string ImageContent = string.Empty;
+    
+    // State for featured notification (isolated)
+    private NotificationDto? FeaturedNotification { get; set; } // <-- NEW
+    private string FeaturedImageContent = string.Empty; // <-- NEW
+    private List<NotificationDto> StandardNotifications { get; set; } = new(); // <-- NEW
 
-    // --- Expansion Logic ---
+    private bool _notificationsProcessed = false; 
+
+    // --- Lifecycle Method for Initialization Logic ---
+    protected override async Task OnParametersSetAsync()
+    {
+        // Check if notifications have just been received/updated and haven't been processed yet
+        if (Notifications != null && !_notificationsProcessed)
+        {
+            _notificationsProcessed = true;
+            await ProcessNotificationsForFeaturedView();
+        }
+        else if (Notifications == null)
+        {
+            // Reset state if notifications become null (e.g., due to loading error)
+            _notificationsProcessed = false;
+            FeaturedNotification = null;
+            StandardNotifications.Clear();
+            FeaturedImageContent = string.Empty;
+            ImageContent = string.Empty;
+            ExpandedNotificationId = null;
+        }
+    }
+
+    /// <summary>
+    /// Finds the latest notification with "emploi" in the title, isolates it as the featured notification,
+    /// and separates the rest into the standard list.
+    /// </summary>
+    private async Task ProcessNotificationsForFeaturedView()
+    {
+        if (Notifications == null || !Notifications.Any())
+        {
+            FeaturedNotification = null;
+            StandardNotifications.Clear();
+            return;
+        }
+
+        // 1. Find the latest notification containing "emploi" in the title (case-insensitive)
+        var latestEmploi = Notifications
+            .OrderByDescending(n => n.PostedDate)
+            .FirstOrDefault(n => n.Title.Contains("emploi", StringComparison.OrdinalIgnoreCase));
+
+        if (latestEmploi != null)
+        {
+            FeaturedNotification = latestEmploi;
+
+            // 2. Filter the main list to contain all OTHER notifications
+            StandardNotifications = Notifications
+                .Where(n => n.Id != FeaturedNotification.Id)
+                .ToList();
+
+            // 3. Load the image for the Featured Notification if available
+            if (!string.IsNullOrEmpty(FeaturedNotification.ImageUrl))
+            {
+                await LoadFeaturedImageAsync(FeaturedNotification.Id);
+            }
+        }
+        else
+        {
+            // No featured notification, so all notifications go to the standard list
+            FeaturedNotification = null;
+            StandardNotifications = Notifications;
+        }
+    }
+
+    // --- Expansion Logic (Only for Standard Notifications) ---
     private async Task ToggleExpansion(int notificationId)
     {
+        // If the same notification is clicked, collapse it.
         if (ExpandedNotificationId == notificationId)
         {
             ExpandedNotificationId = null;
             ImageContent = string.Empty;
         }
+        // If a new notification is clicked, expand it and load its image.
         else
         {
             ExpandedNotificationId = notificationId;
-            var notification = Notifications?.FirstOrDefault(n => n.Id == notificationId);
+            var notification = StandardNotifications.FirstOrDefault(n => n.Id == notificationId);
             if (notification != null && !string.IsNullOrEmpty(notification.ImageUrl))
             {
-                await LoadImageAsync(notificationId);
+                await LoadStandardImageAsync(notificationId);
             }
             else
             {
@@ -134,9 +257,9 @@
             }
         }
     }
-
-    // --- Image Loading Logic ---
-    private async Task LoadImageAsync(int notificationId)
+    
+    // --- Image Loading Logic for Featured Notification ---
+    private async Task LoadFeaturedImageAsync(int notificationId)
     {
         try
         {
@@ -147,6 +270,29 @@
             using var memoryStream = new MemoryStream();
             await stream.CopyToAsync(memoryStream);
             
+            // Set the Base64 content for the featured image
+            FeaturedImageContent = Convert.ToBase64String(memoryStream.ToArray());
+        }
+        catch (Exception ex)
+        {
+            FeaturedImageContent = string.Empty;
+            await JSRuntime.InvokeVoidAsync("console.error", $"Failed to load featured image: {ex.Message}");
+        }
+    }
+
+    // --- Image Loading Logic for Standard Notifications ---
+    private async Task LoadStandardImageAsync(int notificationId)
+    {
+        try
+        {
+            var response = await NotificationService.DownloadNotificationImageAsync(notificationId);
+            response.EnsureSuccessStatusCode();
+
+            using var stream = await response.Content.ReadAsStreamAsync();
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            
+            // Set the Base64 content for the standard image
             ImageContent = Convert.ToBase64String(memoryStream.ToArray());
         }
         catch (Exception ex)
@@ -156,7 +302,8 @@
         }
     }
 
-    // --- Download Logic ---
+
+    // --- Download Logic (Shared for both featured and standard) ---
     private async Task DownloadAttachedFile(int notificationId, string fileNameHint)
     {
         try
