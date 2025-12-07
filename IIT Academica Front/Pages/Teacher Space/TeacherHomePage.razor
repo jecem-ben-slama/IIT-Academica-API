@@ -1,4 +1,7 @@
 @page "/teacher"
+@attribute [Authorize(Roles = "Teacher")]
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
 @inject IIT_Academica_Front.Services.SubjectService SubjectService
 
@@ -78,6 +81,20 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity?.IsAuthenticated ?? false)
+        {
+            NavigationManager.NavigateTo("/", true, replace: true);
+            return;
+        }
+
+        if (!user.IsInRole("Teacher"))
+        {
+            NavigationManager.NavigateTo("/forbidden", true, replace: true);
+            return;
+        }
         try
         {
             Subjects = await SubjectService.GetMySectionsAsync();

@@ -1,12 +1,29 @@
 @page "/forbidden"
+@inject IJSRuntime JSRuntime
 
 <div class="d-flex justify-content-center align-items-center" style="height: 80vh;">
     <div class="text-center">
         <h1 class="display-1 fw-bold text-danger">403</h1>
         <p class="fs-3"> <span class="text-danger">Opps!</span> Access Denied.</p>
         <p class="lead">
-            You do not have the necessary permissions (Admin role) to view this page.
+            You do not have the necessary permissions to view this page.
         </p>
-        <a href="/" class="btn btn-primary">Go Home</a>
+        <button class="btn btn-primary" @onclick="GoBack">
+            <i class="bi bi-arrow-left me-2"></i> Go Back
+        </button>
     </div>
 </div>
+
+@code {
+    // Injected in the markup: @inject IJSRuntime JSRuntime
+
+    /// <summary>
+    /// Uses JS Interop to navigate the user back in the browser's history.
+    /// </summary>
+    private async Task GoBack()
+    {
+        // This command tells the browser to go back one step in its history,
+        // which returns the user to the page they were previously viewing.
+        await JSRuntime.InvokeVoidAsync("history.back");
+    }
+}

@@ -3,6 +3,8 @@
 @attribute [Authorize(Roles = "Admin")]
 
 @using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
+
 @using System.Security.Claims
 @using TableSkeleton
 @using UserManagementView
@@ -10,7 +12,6 @@
 @using NotificationsView
 
 @inject NavigationManager NavigationManager
-@inject AuthenticationStateProvider AuthStateProvider
 @inject UserService UserService
 
 <div class="admin-content mt-4">

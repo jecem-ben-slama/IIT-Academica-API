@@ -3,7 +3,11 @@
 @using IIT_Academica.Enums
 @using StudentLayout
 @using NotificationsFeed
+@attribute [Authorize(Roles = "Student")]
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager NavigationManager
 
+@inject AuthenticationStateProvider AuthStateProvider
 @inject EnrollmentService EnrollmentService
 @inject SubjectService SubjectService
 @inject NotificationService NotificationService // <-- NEW
@@ -153,6 +157,20 @@
 
     public async Task LoadDataAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity?.IsAuthenticated ?? false)
+        {
+            NavigationManager.NavigateTo("/", true, replace: true);
+            return;
+        }
+
+        if (!user.IsInRole("Student"))
+        {
+            NavigationManager.NavigateTo("/forbidden", true, replace: true);
+            return;
+        }
         LoadingError = null;
         // Run all three data loading tasks concurrently
         await Task.WhenAll(
