@@ -13,11 +13,19 @@
         @* --- Rounded Button Selector (View Controller) --- *@
         <div class="d-flex justify-content-center mb-4">
             
+            @* 1. NEW: Notifications Button - Placed first *@
+            <button class="@GetButtonClass(ViewState.NotificationsFeed)"
+                    @onclick="() => HandleViewSelect(ViewState.NotificationsFeed)">
+                <i class="bi bi-bell-fill me-2"></i> Notifications
+            </button>
+
+            @* 2. My Courses Button - Moved to second *@
             <button class="@GetButtonClass(ViewState.MyCourses)"
                     @onclick="() => HandleViewSelect(ViewState.MyCourses)">
                 <i class="bi bi-list-task me-2"></i> My Enrolled Courses
             </button>
 
+            @* 3. All Courses Button - Remains third *@
             <button class="@GetButtonClass(ViewState.AllCourses)"
                     @onclick="() => HandleViewSelect(ViewState.AllCourses)">
                 <i class="bi bi-calendar-check me-2"></i> All Available Courses
@@ -35,14 +43,17 @@
 </div>
 
 @code {
-    // Enum must be defined in the same namespace or accessible globally
-    // We'll define it here for simplicity, but it should ideally be in a shared file.
+    // NOTE: Since the ViewState enum is used in the code block below, 
+    // it must be defined in the IIT_Academica.Enums namespace or locally if that namespace isn't available.
+    // Assuming the enum is updated in IIT_Academica.Enums to include 'Notifications'.
+
 
     // 1. Context Class to share state with the child page
     public class StudentLayoutContext
     {
         // Property to hold the currently selected state
-        public ViewState SelectedView { get; set; } = ViewState.MyCourses;
+        // Initializing to Notifications (the new default view)
+        public ViewState SelectedView { get; set; } = ViewState.NotificationsFeed; 
         
         // Action to allow the child page to register its callback method
         public Action<ViewState> ViewSelectedCallback { get; set; } = delegate { };

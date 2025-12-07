@@ -1,0 +1,187 @@
+ @namespace NotificationsFeed
+ @using IIT_Academica_Front.Models
+@using IIT_Academica_Front.Services
+@inject NotificationService NotificationService
+@inject IJSRuntime JSRuntime
+
+<div class="p-0"> @* Removed container padding as the parent will provide it *@
+    <h2 class="mb-4 text-primary">🔔 Campus Notification Feed</h2>
+    <hr />
+
+    @* --- Loading State --- *@
+    @if (IsLoading)
+    {
+        <div class="text-center p-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Fetching the latest notifications...</p>
+        </div>
+    }
+
+    @* --- Error State --- *@
+    else if (LoadingError != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">Connection Error</h4>
+            <p>Could not load the notification feed. Details: @LoadingError</p>
+            @* Use the EventCallback to notify the parent to retry loading data *@
+            <button class="btn btn-sm btn-outline-danger mt-2" @onclick="() => OnRetryLoading.InvokeAsync()">Retry Loading</button>
+        </div>
+    }
+
+    @* --- Data Display State --- *@
+    else if (Notifications == null || !Notifications.Any())
+    {
+        <div class="alert alert-info text-center" role="alert">
+            <i class="bi bi-bell-slash fs-4 me-2"></i>
+            No new campus notifications available.
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 g-3">
+            @foreach (var notification in Notifications.OrderByDescending(n => n.PostedDate))
+            {
+                <div class="col">
+                    <div class="card shadow-sm notification-card @(ExpandedNotificationId == notification.Id ? "expanded" : "")">
+                        
+                        @* --- Card Header (Clickable for Expansion) --- *@
+                        <div class="card-header d-flex justify-content-between align-items-center"
+                             @onclick="() => ToggleExpansion(notification.Id)" role="button">
+                            
+                            <h5 class="mb-0 text-dark">
+                                <i class="bi bi-megaphone-fill me-2"></i> @notification.Title
+                            </h5>
+                            
+                            <span class="text-muted small">
+                                @notification.PostedDate.ToShortDateString() 
+                                <i class="bi @(ExpandedNotificationId == notification.Id ? "bi-chevron-up" : "bi-chevron-down") ms-2"></i>
+                            </span>
+                        </div>
+
+                        @* --- Collapsible Card Body (Content) --- *@
+                        @if (ExpandedNotificationId == notification.Id)
+                        {
+                            <div class="card-body">
+                                
+                                @* Display Image if available *@
+                                @if (!string.IsNullOrEmpty(notification.ImageUrl) && !string.IsNullOrEmpty(ImageContent))
+                                {
+                                    <div class="text-center mb-3">
+                                        @* Display the Base64 image content directly *@
+                                        <img src="data:image;base64,@ImageContent" class="img-fluid rounded" alt="Notification Image" style="max-height: 300px; object-fit: cover;" />
+                                    </div>
+                                }
+                                
+                                <p class="card-text">@notification.Content</p>
+
+                                @* Download Attached File Button *@
+                                @if (!string.IsNullOrEmpty(notification.FileUrl))
+                                {
+                                    <button class="btn btn-sm btn-outline-primary mt-3" 
+                                            @onclick="() => DownloadAttachedFile(notification.Id, notification.FileUrl)">
+                                        <i class="bi bi-file-earmark-arrow-down-fill me-2"></i> 
+                                        Download Attachment
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    // --- Component Parameters (To receive data from parent) ---
+    [Parameter]
+    public List<NotificationDto>? Notifications { get; set; }
+    
+    [Parameter]
+    public bool IsLoading { get; set; } = true;
+
+    [Parameter]
+    public string? LoadingError { get; set; }
+
+    [Parameter]
+    public EventCallback OnRetryLoading { get; set; }
+
+    // --- Component Internal State ---
+    private int? ExpandedNotificationId { get; set; }
+    private string ImageContent = string.Empty;
+
+    // --- Expansion Logic ---
+    private async Task ToggleExpansion(int notificationId)
+    {
+        if (ExpandedNotificationId == notificationId)
+        {
+            ExpandedNotificationId = null;
+            ImageContent = string.Empty;
+        }
+        else
+        {
+            ExpandedNotificationId = notificationId;
+            var notification = Notifications?.FirstOrDefault(n => n.Id == notificationId);
+            if (notification != null && !string.IsNullOrEmpty(notification.ImageUrl))
+            {
+                await LoadImageAsync(notificationId);
+            }
+            else
+            {
+                ImageContent = string.Empty;
+            }
+        }
+    }
+
+    // --- Image Loading Logic ---
+    private async Task LoadImageAsync(int notificationId)
+    {
+        try
+        {
+            var response = await NotificationService.DownloadNotificationImageAsync(notificationId);
+            response.EnsureSuccessStatusCode();
+
+            using var stream = await response.Content.ReadAsStreamAsync();
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            
+            ImageContent = Convert.ToBase64String(memoryStream.ToArray());
+        }
+        catch (Exception ex)
+        {
+            ImageContent = string.Empty;
+            await JSRuntime.InvokeVoidAsync("console.error", $"Failed to load notification image: {ex.Message}");
+        }
+    }
+
+    // --- Download Logic ---
+    private async Task DownloadAttachedFile(int notificationId, string fileNameHint)
+    {
+        try
+        {
+            var response = await NotificationService.DownloadNotificationFileAsync(notificationId);
+            response.EnsureSuccessStatusCode();
+
+            using var stream = await response.Content.ReadAsStreamAsync();
+            
+            var fileName = response.Content.Headers.ContentDisposition?.FileNameStar
+                ?? response.Content.Headers.ContentDisposition?.FileName
+                ?? fileNameHint;
+
+            var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+
+            // Assumes 'BlazorDownloadFile' JS function is available
+            await JSRuntime.InvokeVoidAsync("BlazorDownloadFile", fileName, contentType, stream);
+        }
+        catch (HttpRequestException ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Download failed: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"An error occurred during download: {ex.Message}");
+        }
+    }
+}

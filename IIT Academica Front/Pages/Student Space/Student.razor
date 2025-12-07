@@ -1,11 +1,12 @@
 @page "/student"
 @layout StudentLayout
 @using IIT_Academica.Enums
-@using IIT_Academica_DTOs.Enrollment_DTOs
-@using  StudentLayout
+@using StudentLayout
+@using NotificationsFeed
 
 @inject EnrollmentService EnrollmentService
 @inject SubjectService SubjectService
+@inject NotificationService NotificationService // <-- NEW
 @inject IJSRuntime JSRuntime
 
 @* --- Render Section: Conditional Content --- *@
@@ -22,7 +23,16 @@
     }
 
     @* --- Conditional Rendering based on the selected view state --- *@
-    @if (SelectedView == ViewState.MyCourses)
+    
+    @if (SelectedView == ViewState.NotificationsFeed) // <-- NEW: Renders the notification feed
+    {
+        <NotificationsFeed
+            Notifications="@Notifications"
+            IsLoading="@IsLoadingNotifications"
+            LoadingError="@LoadingError"
+            OnRetryLoading="LoadNotificationsAsync" />
+    }
+    else if (SelectedView == ViewState.MyCourses)
     {
         <MyCourses 
             EnrolledCourses="@EnrolledCourses" 
@@ -88,20 +98,24 @@
 
 
 @code {
-    @* --- Cascading State and View Selection --- *@
+    // --- Cascading State and View Selection ---
     
     [CascadingParameter]
     public StudentLayout.StudentLayoutContext? LayoutContext { get; set; }
 
-private ViewState SelectedView { get; set; } = ViewState.MyCourses; // Resolved via new using
+    // Use the default view from the LayoutContext (which is now Notifications)
+    private ViewState SelectedView { get; set; } = ViewState.NotificationsFeed; 
+
     // --- Data State ---
     
     private List<StudentCourseDto>? EnrolledCourses;
     private List<SubjectDTO>? AvailableSubjects;
+    private List<NotificationDto>? Notifications; // <-- NEW
 
     private string? LoadingError;
     private bool IsLoadingMyCourses = true;
     private bool IsLoadingAllSubjects = true;
+    private bool IsLoadingNotifications = true; // <-- NEW
 
     // --- Modal State ---
     
@@ -119,8 +133,10 @@ private ViewState SelectedView { get; set; } = ViewState.MyCourses; // Resolved 
         if (firstRender && LayoutContext != null)
         {
             // Register the page's callback method with the layout's context.
-            // When the layout buttons are clicked, this method updates the page's state.
             LayoutContext.ViewSelectedCallback = SelectView;
+            
+            // Set initial selected view from the context (now Notifications)
+            SelectedView = LayoutContext.SelectedView; 
             
             await LoadDataAsync();
             StateHasChanged();
@@ -138,14 +154,42 @@ private ViewState SelectedView { get; set; } = ViewState.MyCourses; // Resolved 
     public async Task LoadDataAsync()
     {
         LoadingError = null;
-        await Task.WhenAll(LoadMyCoursesAsync(), LoadAllSubjectsAsync());
+        // Run all three data loading tasks concurrently
+        await Task.WhenAll(
+            LoadMyCoursesAsync(), 
+            LoadAllSubjectsAsync(), 
+            LoadNotificationsAsync() // <-- NEW: Load Notifications
+        );
+    }
+
+    private async Task LoadNotificationsAsync() // <-- NEW
+    {
+        IsLoadingNotifications = true;
+        try { 
+            Notifications = await NotificationService.GetNotificationFeedAsync(); 
+        }
+        catch (Exception ex) 
+        { 
+            // Only set a general error if it's the first error encountered
+            if (LoadingError == null) 
+            {
+                LoadingError = "Failed to load notifications: " + ex.Message;
+            }
+        }
+        finally { IsLoadingNotifications = false; }
     }
 
     private async Task LoadMyCoursesAsync()
     {
         IsLoadingMyCourses = true;
         try { EnrolledCourses = await EnrollmentService.GetStudentEnrollmentsAsync(); }
-        catch (Exception ex) { LoadingError = ex.Message; }
+        catch (Exception ex) 
+        { 
+            if (LoadingError == null)
+            {
+                LoadingError = "Failed to load enrolled courses: " + ex.Message;
+            }
+        }
         finally { IsLoadingMyCourses = false; }
     }
 
@@ -153,7 +197,13 @@ private ViewState SelectedView { get; set; } = ViewState.MyCourses; // Resolved 
     {
         IsLoadingAllSubjects = true;
         try { AvailableSubjects = await SubjectService.GetAllSubjectsAsync(); }
-        catch (Exception ex) { LoadingError = ex.Message; }
+        catch (Exception ex) 
+        { 
+             if (LoadingError == null)
+            {
+                LoadingError = "Failed to load available subjects: " + ex.Message;
+            }
+        }
         finally { IsLoadingAllSubjects = false; }
     }
 
