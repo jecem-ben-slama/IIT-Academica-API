@@ -51,6 +51,12 @@ builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 builder.Services.AddScoped<ICourseMaterialRepository, CourseMaterialRepository>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+// 1. Register the configuration class for SmtpSettings
+builder.Services.Configure<SmtpSettings>(
+    builder.Configuration.GetSection("SmtpSettings"));
+
+// 2. Register the IEmailService implementation for Dependency Injection
+builder.Services.AddTransient<IEmailService, EmailService>();
 
 // JWT Bearer Configuration
 builder.Services.AddAuthentication(options =>

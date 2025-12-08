@@ -124,3 +124,71 @@
         font-size: 1.7rem;
     }
 }
+
+/* Example CSS for the new link */
+.forgot-password-link
+{
+    font-size: 0.9em;
+    color: #007bff;
+    /* Use your primary color */
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.forgot-password-link:hover
+{
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+/*
+ * Password Wrapper: Sets up the positioning context
+ */
+.password-wrapper
+{
+    position: relative;
+    /* All children with 'position: absolute' will be positioned relative to this container */
+    display: flex;
+    /* Ensures the wrapper behaves well in the layout */
+    align-items: center;
+}
+
+/*
+ * Modern Input: Ensures the input field takes up the necessary space
+ */
+.password-wrapper .form-control
+{
+    /* Or use your .modern-input class here */
+    padding-right: 40px;
+    /* IMPORTANT: Add padding on the right so the text doesn't hide under the button */
+}
+
+/*
+ * Toggle Button: Positions the eye icon over the input field
+ */
+.password-wrapper .toggle-password
+{
+    position: absolute;
+    right: 5px;
+    /* Adjust this value to set the distance from the right edge */
+    top: 50%;
+    transform: translateY(-50%);
+    /* Vertically center the button */
+
+    /* Style cleanup for the button */
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    z-index: 10;
+    /* Ensure the button is clickable above the input */
+    color: #6c757d;
+    /* A muted color, change as needed */
+    line-height: 1;
+    /* Keep icon vertically aligned */
+}
+
+.password-wrapper .toggle-password:hover
+{
+    color: #000;
+}

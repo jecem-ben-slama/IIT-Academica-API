@@ -30,6 +30,10 @@ public interface IUserRepository
     Task<string?> GetUserRoleAsync(ApplicationUser user);
     Task<IdentityResult> AddToRoleAsync(ApplicationUser user, string role);
 Task<IdentityResult> RemoveFromRoleAsync(ApplicationUser user, string role);
+Task<string?> GeneratePasswordResetTokenAsync(string email); 
+    
+    // Resets the user's password using the provided token and the new password.
+    Task<IdentityResult> ResetPasswordAsync(string email, string token, string newPassword);
 
 
     

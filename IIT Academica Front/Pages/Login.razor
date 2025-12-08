@@ -39,6 +39,14 @@
                 </div>
             </div>
 
+            @* --- NEW FORGOT PASSWORD LINK --- *@
+            <div class="text-end mt-2">
+                <a href="/auth/forgot-password" class="forgot-password-link">
+                    Forgot Password?
+                </a>
+            </div>
+            @* -------------------------------- *@
+
             @if (!string.IsNullOrEmpty(errorMessage))
             {
                 <div class="alert alert-danger mt-3 text-center">
@@ -81,6 +89,7 @@
                     "Student" => "/student",
                     "Admin" => "/admin",
                     "Teacher" => "/teacher",
+                    _ => "/", // Default path if role is unknown
                 }, true, true);
             }
             else

@@ -111,6 +111,47 @@ public async Task<IdentityResult> RemoveFromRoleAsync(ApplicationUser user, stri
 {
     return await _userManager.RemoveFromRoleAsync(user, role);
 }
+// --- NEW FORGOT PASSWORD IMPLEMENTATION ---
+
+    /// <summary>
+    /// Generates a secure, time-sensitive token for password reset using ASP.NET Identity's built-in mechanism.
+    /// </summary>
+    /// <param name="email">The email of the user requesting the reset.</param>
+    /// <returns>The reset token string, or null if the user is not found.</returns>
+    public async Task<string?> GeneratePasswordResetTokenAsync(string email)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        
+        if (user == null)
+        {
+            // Do not throw an error or indicate user not found for security reasons
+            return null; 
+        }
+
+        // Generate the token
+        return await _userManager.GeneratePasswordResetTokenAsync(user);
+    }
+    // <summary>
+    /// Resets the user's password using the generated token and a new password.
+    /// </summary>
+    /// <param name="email">The email of the user.</param>
+    /// <param name="token">The password reset token received via email.</param>
+    /// <param name="newPassword">The new password the user wishes to set.</param>
+    /// <returns>The result of the Identity operation (Success or Failure).</returns>
+    public async Task<IdentityResult> ResetPasswordAsync(string email, string token, string newPassword)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+
+        if (user == null)
+        {
+            // Returning a success result here helps prevent user enumeration attacks, 
+            // though the calling service/controller should check the email first.
+            return IdentityResult.Failed(new IdentityError { Description = "User not found or token is invalid." });
+        }
+
+        // The built-in method handles token validation and password hashing.
+        return await _userManager.ResetPasswordAsync(user, token, newPassword);
+    }
 
 
 }
