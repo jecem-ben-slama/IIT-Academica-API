@@ -7,10 +7,10 @@
 
 @* This component assumes it is rendered within an Authorized context (Admin) *@
 
-<div class="subject-management-container">
+<div id="subject-management-view" class="subject-management-container">
     <h3><span class="oi oi-book" aria-hidden="true"></span> Subject Management</h3>
 
-    <p class="text-danger">@ErrorMessage</p>
+    <p id="main-error-message" class="text-danger">@ErrorMessage</p>
 
     @if (IsLoading)
     {
@@ -18,21 +18,22 @@
     }
     else if (Subjects == null || !Subjects.Any())
     {
-        <p class="text-info">No subjects found.</p>
+        <p id="no-subjects-message" class="text-info">No subjects found.</p>
     }
     else
     {
         @* --- Add New Button & Search Input --- *@
         <div class="d-flex justify-content-between align-items-center mb-3">
-            @* Add New Button *@
-            <button class="btn btn-primary" @onclick="() => OpenCreateForm()">
+            @* ------------------- Add New Button (ID ADDED) ------------------- *@
+            <button id="add-new-subject-btn" class="btn btn-primary" @onclick="() => OpenCreateForm()">
                 <span class="oi oi-plus" aria-hidden="true"></span> Add New Subject
             </button>
             
-            @* Search Input Field *@
+            @* ------------------- Search Input Field (ID ADDED) ------------------- *@
             <div class="input-group" style="max-width: 350px;">
                 <span class="input-group-text oi oi-magnifying-glass" aria-hidden="true"></span>
-                <input class="form-control"
+                <input id="subject-search-input"
+                       class="form-control"
                        type="text"
                        placeholder="Search code or title..."
                        @bind="SearchQuery"
@@ -42,7 +43,7 @@
 
         @* --- Subject Table --- *@
         <div class="table-responsive">
-            <table class="table table-striped table-hover">
+            <table id="subjects-table" class="table table-striped table-hover">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -57,15 +58,17 @@
                     @* Use FilteredSubjects here *@
                     @foreach (var subject in FilteredSubjects)
                     {
-                        <tr>
+                        <tr id="subject-row-@subject.Id">
                             <td>@subject.Id</td>
-                            <td><strong>@subject.RegistrationCode</strong></td>
-                            <td>@subject.SubjectName</td>
+                            <td id="subject-code-@subject.Id"><strong>@subject.RegistrationCode</strong></td>
+                            <td id="subject-title-@subject.Id">@subject.SubjectName</td>
                             <td>@subject.TeacherFullName (ID: @subject.TeacherId)</td>
                             <td>@subject.EnrollmentCount</td>
                             <td>
-                                <button class="btn btn-sm btn-info" @onclick="() => OpenEditForm(subject)">Edit</button>
-                                <button class="btn btn-sm btn-danger" @onclick="() => DeleteSubject(subject.Id)">Delete</button>
+                                @* ------------------- Edit Button (ID ADDED) ------------------- *@
+                                <button id="edit-subject-btn-@subject.Id" class="btn btn-sm btn-info" @onclick="() => OpenEditForm(subject)">Edit</button>
+                                @* ------------------- Delete Button (ID ADDED) ------------------- *@
+                                <button id="delete-subject-btn-@subject.Id" class="btn btn-sm btn-danger" @onclick="() => DeleteSubject(subject.Id)">Delete</button>
                             </td>
                         </tr>
                     }
@@ -74,15 +77,15 @@
         </div>
     }
 
-    @* --- Create/Update Modal Forms --- *@
+    @* ------------------- Create/Update Modal Forms (IDs ADDED) ------------------- *@
     @if (ShowModal)
     {
-        <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
+        <div id="subject-modal" class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">@(CurrentSubjectId == 0 ? "Create New Subject" : "Edit Subject")</h5>
-                        <button type="button" class="close" @onclick="CloseModal">
+                        <h5 id="modal-title" class="modal-title">@(CurrentSubjectId == 0 ? "Create New Subject" : "Edit Subject")</h5>
+                        <button id="modal-close-btn" type="button" class="close" @onclick="CloseModal">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
@@ -92,13 +95,15 @@
                             <ValidationSummary />
 
                             <div class="form-group mb-3">
-                                <label>Registration Code:</label>
-                                <InputText @bind-Value="CurrentDto.RegistrationCode" class="form-control" />
+                                <label for="reg-code-input">Registration Code:</label>
+                                @* ------------------- REG CODE INPUT (ID ADDED) ------------------- *@
+                                <InputText id="reg-code-input" @bind-Value="CurrentDto.RegistrationCode" class="form-control" />
                             </div>
                             
                             <div class="form-group mb-3">
-                                <label>Title:</label>
-                                <InputText @bind-Value="CurrentDto.SubjectName" class="form-control" />
+                                <label for="subject-title-input">Title:</label>
+                                @* ------------------- TITLE INPUT (ID ADDED) ------------------- *@
+                                <InputText id="subject-title-input" @bind-Value="CurrentDto.SubjectName" class="form-control" />
                             </div>
                             
                             @* Use Select for Teacher Name *@
@@ -106,11 +111,12 @@
                                 <label for="teacherSelect">Teacher:</label>
                                 @if (Teachers != null && Teachers.Any())
                                 {
-                                    <InputSelect id="teacherSelect" @bind-Value="SelectedTeacherId" class="form-control">
+                                    @* ------------------- TEACHER SELECT (ID ADDED) ------------------- *@
+                                    <InputSelect id="teacher-select" @bind-Value="SelectedTeacherId" class="form-control">
                                         <option value="">-- Select Teacher --</option>
                                         @foreach (var teacher in Teachers)
                                         {
-                                            <option value="@teacher.Id">@teacher.Name @teacher.LastName</option>
+                                            <option id="teacher-option-@teacher.Id" value="@teacher.Id">@teacher.Name @teacher.LastName</option>
                                         }
                                     </InputSelect>
                                 }
@@ -122,11 +128,14 @@
                                 <ValidationMessage For="@(() => SelectedTeacherId)" />
                             </div>
                             
-                            <p class="text-danger mt-2">@ModalErrorMessage</p>
+                            @* ------------------- MODAL ERROR MESSAGE (ID ADDED) ------------------- *@
+                            <p id="modal-error-message" class="text-danger mt-2">@ModalErrorMessage</p>
                             
                             <div class="modal-footer mt-4">
-                                <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
-                                <button type="submit" class="btn btn-primary">@(CurrentSubjectId == 0 ? "Create" : "Update")</button>
+                                @* ------------------- CANCEL BUTTON (ID ADDED) ------------------- *@
+                                <button id="modal-cancel-btn" type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                                @* ------------------- SUBMIT BUTTON (ID ADDED) ------------------- *@
+                                <button id="modal-submit-btn" type="submit" class="btn btn-primary">@(CurrentSubjectId == 0 ? "Create" : "Update")</button>
                             </div>
                         </EditForm>
                     </div>

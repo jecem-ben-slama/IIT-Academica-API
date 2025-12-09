@@ -17,12 +17,14 @@
 
 <div class="container-fluid p-4">
     
+    @* ------------------- General Error State (ID ADDED) ------------------- *@
     @if (LoadingError != null)
     {
-        <div class="alert alert-danger">
+        <div id="dashboard-general-error" class="alert alert-danger">
             <h5 class="alert-heading">Data Loading Error</h5>
             <p>Could not fetch data: @LoadingError</p>
-            <button class="btn btn-sm btn-outline-danger mt-2" @onclick="LoadDataAsync">Retry Loading</button>
+            @* ------------------- Retry Button (ID ADDED) ------------------- *@
+            <button id="dashboard-retry-btn" class="btn btn-sm btn-outline-danger mt-2" @onclick="LoadDataAsync">Retry Loading</button>
         </div>
     }
 
@@ -30,33 +32,42 @@
     
     @if (SelectedView == ViewState.NotificationsFeed) // <-- NEW: Renders the notification feed
     {
-        <NotificationsFeed
-            Notifications="@Notifications"
-            IsLoading="@IsLoadingNotifications"
-            LoadingError="@LoadingError"
-            OnRetryLoading="LoadNotificationsAsync" />
+        @* ------------------- Notifications View (ID ADDED) ------------------- *@
+        <div id="notifications-view">
+            <NotificationsFeed
+                Notifications="@Notifications"
+                IsLoading="@IsLoadingNotifications"
+                LoadingError="@LoadingError"
+                OnRetryLoading="LoadNotificationsAsync" />
+        </div>
     }
     else if (SelectedView == ViewState.MyCourses)
     {
-        <MyCourses 
-            EnrolledCourses="@EnrolledCourses" 
-            IsLoadingMyCourses="@IsLoadingMyCourses"
-            OnDropCourse="ConfirmDropCourse" />
+        @* ------------------- My Courses View (ID ADDED) ------------------- *@
+        <div id="my-courses-view">
+            <MyCourses 
+                EnrolledCourses="@EnrolledCourses" 
+                IsLoadingMyCourses="@IsLoadingMyCourses"
+                OnDropCourse="ConfirmDropCourse" />
+        </div>
     }
     else if (SelectedView == ViewState.AllCourses)
     {
-        <AllCourses 
-            AvailableSubjects="@AvailableSubjects"
-            EnrolledCourses="@EnrolledCourses" 
-            IsLoadingAllSubjects="@IsLoadingAllSubjects"
-            OnEnrollmentRequested="ShowEnrollmentModal" />
+        @* ------------------- All Courses View (ID ADDED) ------------------- *@
+        <div id="all-courses-view">
+            <AllCourses 
+                AvailableSubjects="@AvailableSubjects"
+                EnrolledCourses="@EnrolledCourses" 
+                IsLoadingAllSubjects="@IsLoadingAllSubjects"
+                OnEnrollmentRequested="ShowEnrollmentModal" />
+        </div>
     }
 </div>
 
 @* ---------------- Modal: Enrollment Confirmation ---------------- *@
-
-<div class="modal @(ShowEnrollModal ? "show d-block" : "")" tabindex="-1" 
-     style="@(ShowEnrollModal ? "background-color: rgba(0,0,0,.5);" : "")">
+@* ------------------- Modal Container (ID ADDED) ------------------- *@
+<div id="enrollment-modal" class="modal @(ShowEnrollModal ? "show d-block" : "")" tabindex="-1" 
+     style="@(ShowEnrollModal ? "background-color: rgba(0,0,0,.5);" : "")">
     <div class="modal-dialog">
         <div class="modal-content">
             
@@ -64,8 +75,9 @@
                 <DataAnnotationsValidator />
                 
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">Enroll in @(CurrentSubject?.SubjectName)</h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="HideEnrollmentModal"></button>
+                    <h5 id="enroll-modal-title" class="modal-title">Enroll in @(CurrentSubject?.SubjectName)</h5>
+                    @* ------------------- Close Button (ID ADDED) ------------------- *@
+                    <button id="enroll-modal-close-btn" type="button" class="btn-close btn-close-white" @onclick="HideEnrollmentModal"></button>
                 </div>
                 
                 <div class="modal-body">
@@ -73,21 +85,25 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Registration Code</label>
-                        <InputText class="form-control" @bind-Value="EnrollmentDto.RegistrationCode" />
+                        @* ------------------- Input Field (ID ADDED) ------------------- *@
+                        <InputText id="registration-code-input" class="form-control" @bind-Value="EnrollmentDto.RegistrationCode" />
                         <ValidationMessage For="@(() => EnrollmentDto.RegistrationCode)" />
                     </div>
 
                     @if (!string.IsNullOrEmpty(EnrollmentMessage))
                     {
-                        <div class="alert @(EnrollmentSuccess ? "alert-success" : "alert-danger")">
+                        @* ------------------- Enrollment Message (ID ADDED) ------------------- *@
+                        <div id="enrollment-message-status" class="alert @(EnrollmentSuccess ? "alert-success" : "alert-danger")">
                             @EnrollmentMessage
                         </div>
                     }
                 </div>
                 
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" @onclick="HideEnrollmentModal">Cancel</button>
-                    <button class="btn btn-primary" type="submit" disabled="@IsEnrolling">
+                    @* ------------------- Cancel Button (ID ADDED) ------------------- *@
+                    <button id="enroll-modal-cancel-btn" class="btn btn-secondary" type="button" @onclick="HideEnrollmentModal">Cancel</button>
+                    @* ------------------- Submit Button (ID ADDED) ------------------- *@
+                    <button id="enroll-modal-confirm-btn" class="btn btn-primary" type="submit" disabled="@IsEnrolling">
                         @if (IsEnrolling)
                         {
                             <span class="spinner-border spinner-border-sm me-2"></span>

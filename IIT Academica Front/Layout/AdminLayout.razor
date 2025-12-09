@@ -4,27 +4,36 @@
 
 <CascadingValue Value="LayoutContext" IsFixed="false">
 
-    <div class="modern-admin-layout">
-        <header class="p-4 border-bottom">
+    @* ------------------- MAIN LAYOUT CONTAINER (ID ADDED) ------------------- *@
+    <div id="admin-main-layout" class="modern-admin-layout">
+        @* ------------------- HEADER (ID ADDED) ------------------- *@
+        <header id="admin-header" class="p-4 border-bottom">
             <h2 class="h1 mb-0 text-dark-emphasis">📚 Admin Dashboard</h2>
         </header>
 
-        <nav class="sub-navbar bg-white shadow-sm">
+        @* ------------------- NAVIGATION BAR (ID ADDED) ------------------- *@
+        <nav id="admin-sub-navbar" class="sub-navbar bg-white shadow-sm">
             <div class="container-fluid py-3 px-4 d-flex justify-content-start flex-wrap gap-3">
 
-                <button class="nav-btn btn btn-light d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "" ? "active-users" : "")"
+                @* ------------------- Users Button (ID ADDED) ------------------- *@
+                <button id="nav-users-btn" 
+                        class="nav-btn btn btn-light d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "" ? "active-users" : "")"
                         @onclick="@(() => HandleRoleSelect(""))" title="All Users">
                     <i class="bi bi-people-fill fs-5"></i>
                     <span class="d-none d-md-inline">Users</span>
                 </button>
 
-                <button class="nav-btn btn btn-light d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "Subjects" ? "active-subjects" : "")"
+                @* ------------------- Subjects Button (ID ADDED) ------------------- *@
+                <button id="nav-subjects-btn" 
+                        class="nav-btn btn btn-light d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "Subjects" ? "active-subjects" : "")"
                         @onclick="@(() => HandleRoleSelect("Subjects"))" title="Subjects">
                     <i class="bi bi-book fs-5"></i>
                     <span class="d-none d-md-inline">Subjects</span>
                 </button>
 
-                <button class="nav-btn btn btn-light d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "Notifications" ? "active-notifications" : "")"
+                @* ------------------- Notifications Button (ID ADDED) ------------------- *@
+                <button id="nav-notifications-btn" 
+                        class="nav-btn btn btn-light d-flex align-items-center gap-2 @(LayoutContext.SelectedRole == "Notifications" ? "active-notifications" : "")"
                         @onclick="@(() => HandleRoleSelect("Notifications"))" title="Notifications">
                     <i class="bi bi-bell-fill fs-5"></i>
                     <span class="d-none d-md-inline">Notifications</span>
@@ -33,7 +42,8 @@
             </div>
         </nav>
 
-        <main class="container-fluid p-4">
+        @* ------------------- MAIN CONTENT AREA (ID ADDED) ------------------- *@
+        <main id="admin-main-content-body" class="container-fluid p-4">
             @Body
         </main>
     </div>
@@ -44,6 +54,7 @@
     public class AdminLayoutContext
     {
         public string SelectedRole { get; set; } = string.Empty;
+        // Action is used to call back into the page content to update its state/view
         public Action<string> RoleSelectedCallback { get; set; } = delegate { };
     }
 
@@ -51,11 +62,14 @@
 
     private void HandleRoleSelect(string role)
     {
+        // Invoke the callback set by the consuming component (e.g., Admin.razor)
         LayoutContext.RoleSelectedCallback.Invoke(role);
+        // Update the context property used for highlighting the active button
         LayoutContext.SelectedRole = role;
         StateHasChanged();
     }
 
+    // This method can be called by child components (like Admin.razor)
     public void SetContext(string selectedRole, Action<string> callback)
     {
         LayoutContext.SelectedRole = selectedRole;

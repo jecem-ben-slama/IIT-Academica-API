@@ -9,18 +9,20 @@
 <div class="container p-4">
 
     <div class="d-flex justify-content-between align-items-center mb-5 pb-3 border-bottom">
-        <h2 class="fw-bold text-primary">
+        @* ------------------- Title (ID ADDED) ------------------- *@
+        <h2 id="materials-page-title" class="fw-bold text-primary">
             <i class="bi bi-journal-check me-2"></i> Course Materials for @SubjectName
         </h2>
-        <button class="btn btn-outline-secondary" @onclick="GoBack">
+        @* ------------------- Back Button (ID ADDED) ------------------- *@
+        <button id="back-to-courses-btn" class="btn btn-outline-secondary" @onclick="GoBack">
             <i class="bi bi-arrow-left me-2"></i> Back to Courses
         </button>
     </div>
 
-    @* --- Loading State --- *@
+    @* ------------------- Loading State (ID ADDED) ------------------- *@
     @if (IsLoading)
     {
-        <div class="text-center p-5 border rounded-3 bg-light">
+        <div id="loading-state" class="text-center p-5 border rounded-3 bg-light">
             <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                 <span class="visually-hidden">Loading...</span>
             </div>
@@ -28,21 +30,22 @@
         </div>
     }
 
-    @* --- Error State --- *@
+    @* ------------------- Error State (ID ADDED) ------------------- *@
     else if (LoadingError != null)
     {
-        <div class="alert alert-danger p-4 shadow-sm" role="alert">
+        <div id="error-state" class="alert alert-danger p-4 shadow-sm" role="alert">
             <h4 class="alert-heading d-flex align-items-center"><i class="bi bi-x-octagon-fill me-2"></i> Loading Failed!</h4>
             <p>Could not load materials for the subject. Details: **@LoadingError**</p>
             <hr>
-            <button class="btn btn-sm btn-danger mt-2" @onclick="LoadMaterialsAsync"><i class="bi bi-arrow-clockwise me-1"></i> Retry</button>
+            @* ------------------- Retry Button (ID ADDED) ------------------- *@
+            <button id="retry-load-btn" class="btn btn-sm btn-danger mt-2" @onclick="LoadMaterialsAsync"><i class="bi bi-arrow-clockwise me-1"></i> Retry</button>
         </div>
     }
 
-    @* --- Data Display State --- *@
+    @* ------------------- Empty Data State (ID ADDED) ------------------- *@
     else if (Materials == null || Materials.Count == 0)
     {
-        <div class="alert alert-info text-center p-4 shadow-sm" role="alert">
+        <div id="no-materials-state" class="alert alert-info text-center p-4 shadow-sm" role="alert">
             <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
             <h5 class="alert-heading">No Materials Available</h5>
             <p class="mb-0">There are no course materials available for this subject yet.</p>
@@ -50,20 +53,24 @@
     }
     else
     {
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        @* ------------------- Materials List Container (ID ADDED) ------------------- *@
+        <div id="materials-list-container" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             @foreach (var material in Materials)
             {
                 <div class="col">
-                    <div class="material-card h-100 shadow-sm border-primary">
+                    @* ------------------- Material Card (ID ADDED) ------------------- *@
+                    <div id="material-card-@material.Id" class="material-card h-100 shadow-sm border-primary">
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title text-primary fw-bold">
+                            @* ------------------- Material Title (ID ADDED) ------------------- *@
+                            <h5 id="material-title-@material.Id" class="card-title text-primary fw-bold">
                                 <i class="bi bi-file-earmark-text me-2"></i> @material.Title
                             </h5>
                             <h6 class="card-subtitle mb-3 text-muted">Uploaded: @material.UploadDate.ToShortDateString()</h6>
                             <p class="card-text flex-grow-1 text-secondary">@material.Description</p>
                             
                             <div class="mt-auto pt-3 download-button-group">
-                                <button class="btn btn-success w-100" 
+                                @* ------------------- Download Button (ID ADDED) ------------------- *@
+                                <button id="download-btn-@material.Id" class="btn btn-success w-100" 
                                         @onclick="() => DownloadMaterial(material)"
                                         disabled="@(DownloadingMaterialId.HasValue && DownloadingMaterialId != material.Id)">
 

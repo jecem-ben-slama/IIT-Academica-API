@@ -18,43 +18,59 @@
         <EditForm Model="@loginDto" OnValidSubmit="HandleLogin">
             <DataAnnotationsValidator />
 
+            @* ------------------- EMAIL INPUT FIELD (ID ADDED) ------------------- *@
             <div class="input-field">
                 <label>Email Address</label>
-                <InputText class="modern-input" @bind-Value="loginDto.Email" />
+                <InputText id="email-input" 
+                           class="modern-input" 
+                           @bind-Value="loginDto.Email" />
             </div>
 
+            @* ------------------- PASSWORD INPUT FIELD (ID ADDED) ------------------- *@
             <div class="input-field mt-3">
                 <label>Password</label>
 
                 <div class="password-wrapper">
 
-                    <InputText type="@(showPassword ? "text" : "password")"
+                    <InputText id="password-input" 
+                               type="@(showPassword ? "text" : "password")"
                                class="modern-input"
                                @bind-Value="loginDto.Password" />
-
-                    <button type="button" class="toggle-password" @onclick="TogglePasswordVisibility">
+                    
+                    @* Toggle Button (ID ADDED) *@
+                    <button id="password-toggle-btn" 
+                            type="button" 
+                            class="toggle-password" 
+                            @onclick="TogglePasswordVisibility">
                         <i class="bi @(showPassword ? "bi-eye-slash" : "bi-eye")"></i>
                     </button>
 
                 </div>
             </div>
 
-            @* --- NEW FORGOT PASSWORD LINK --- *@
+            @* ------------------- FORGOT PASSWORD LINK (ID ADDED) ------------------- *@
             <div class="text-end mt-2">
-                <a href="/auth/forgot-password" class="forgot-password-link">
+                <a id="forgot-password-link" 
+                   href="/auth/forgot-password" 
+                   class="forgot-password-link">
                     Forgot Password?
                 </a>
             </div>
-            @* -------------------------------- *@
-
+            
+            @* ------------------- ERROR MESSAGE DISPLAY (ID ADDED) ------------------- *@
             @if (!string.IsNullOrEmpty(errorMessage))
             {
-                <div class="alert alert-danger mt-3 text-center">
+                <div id="login-error-message" 
+                     class="alert alert-danger mt-3 text-center">
                     @errorMessage
                 </div>
             }
 
-            <button type="submit" class="btn primary-btn w-100 mt-4" disabled="@isBusy">
+            @* ------------------- LOGIN BUTTON (ID ADDED) ------------------- *@
+            <button id="login-submit-btn" 
+                    type="submit" 
+                    class="btn primary-btn w-100 mt-4" 
+                    disabled="@isBusy">
                 @if (isBusy)
                 {
                     <span class="spinner-border spinner-border-sm me-2"></span>

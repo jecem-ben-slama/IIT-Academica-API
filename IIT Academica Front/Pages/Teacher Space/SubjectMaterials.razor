@@ -8,13 +8,14 @@
 
 <TopNavbar/>
 
-<div class="container mt-5">
+<div id="materials-main-container" class="container mt-5">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="page-title">Course Materials 📚</h2>
+        <h2 id="page-title" class="page-title">Course Materials 📚</h2>
 
         <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary btn-soft" @onclick="LoadMaterials" disabled="@isLoading">
+            @* ------------------- Refresh Button (ID ADDED) ------------------- *@
+            <button id="refresh-materials-btn" class="btn btn-outline-primary btn-soft" @onclick="LoadMaterials" disabled="@isLoading">
                 @if (isLoading)
                 {
                     <span class="spinner-border spinner-border-sm" role="status"></span>
@@ -22,39 +23,43 @@
                 <i class="bi bi-arrow-clockwise @(isLoading ? "d-none" : "")"></i> Refresh
             </button>
 
-            <button class="btn btn-success btn-soft" @onclick="() => ShowModal(false, null!)">
+            @* ------------------- Add New Button (ID ADDED) ------------------- *@
+            <button id="add-new-material-btn" class="btn btn-success btn-soft" @onclick="() => ShowModal(false, null!)">
                 <i class="bi bi-plus-circle"></i> Add New
             </button>
         </div>
     </div>
 
-    <h5 class="text-secondary mb-4">Subject ID: <strong>@SubjectId</strong></h5>
+    <h5 class="text-secondary mb-4">Subject ID: <strong id="subject-id-display">@SubjectId</strong></h5>
 
-    @* -------- Loading State -------- *@
+    @* -------- Loading State (ID ADDED) -------- *@
     @if (isLoading)
     {
-        <div class="card-modern text-center">
+        <div id="loading-state" class="card-modern text-center">
             <div class="spinner-border text-primary"></div>
             <p class="mt-3 fs-5">Fetching latest materials...</p>
         </div>
     }
+    @* -------- Error State (ID ADDED) -------- *@
     else if (errorMessage != null)
     {
-        <div class="alert alert-danger shadow-sm">
+        <div id="error-state" class="alert alert-danger shadow-sm">
             <h5>Error loading materials</h5>
             <p>@errorMessage</p>
         </div>
     }
+    @* -------- Empty State (ID ADDED) -------- *@
     else if (Materials == null || !Materials.Any())
     {
-        <div class="card-modern text-center">
+        <div id="empty-state" class="card-modern text-center">
             <h5 class="text-muted">No Materials Found</h5>
             <p>Click <strong>Add New</strong> to upload your first course material.</p>
         </div>
     }
+    @* -------- Data Table State (ID ADDED) -------- *@
     else
     {
-        <div class="card-modern">
+        <div id="materials-table-container" class="card-modern">
             <table class="table table-modern table-hover align-middle mb-0">
                 <thead>
                     <tr>
@@ -67,22 +72,26 @@
                 <tbody>
                     @foreach (var m in Materials)
                     {
-                        <tr>
+                        @* ------------------- Table Row (ID ADDED) ------------------- *@
+                        <tr id="material-row-@m.Id">
                             <td class="fw-bold">@m.Title</td>
                             <td>@(string.IsNullOrEmpty(m.Description) ? "N/A" : m.Description)</td>
                             <td><span class="badge badge-material">@m.MaterialType</span></td>
 
                             <td>
                                 <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-info text-white btn-soft" @onclick="() => DownloadMaterial(m.Id)">
+                                    @* ------------------- Download Button (ID ADDED) ------------------- *@
+                                    <button id="download-btn-@m.Id" class="btn btn-sm btn-info text-white btn-soft" @onclick="() => DownloadMaterial(m.Id)">
                                         <i class="bi bi-download"></i>
                                     </button>
 
-                                    <button class="btn btn-sm btn-warning btn-soft" @onclick="() => ShowModal(true, m)">
+                                    @* ------------------- Edit Button (ID ADDED) ------------------- *@
+                                    <button id="edit-btn-@m.Id" class="btn btn-sm btn-warning btn-soft" @onclick="() => ShowModal(true, m)">
                                         <i class="bi bi-pencil"></i>
                                     </button>
 
-                                    <button class="btn btn-sm btn-danger btn-soft" @onclick="() => DeleteMaterial(m)">
+                                    @* ------------------- Delete Button (ID ADDED) ------------------- *@
+                                    <button id="delete-btn-@m.Id" class="btn btn-sm btn-danger btn-soft" @onclick="() => DeleteMaterial(m)">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
@@ -95,61 +104,62 @@
     }
 </div>
 
-@* -------- Modal -------- *@
-<div class="modal modal-modern @(showModal ? "show d-block" : "")" style="@(showModal ? "background-color: rgba(0,0,0,.6);" : "")">
+@* -------- Modal (ID ADDED) -------- *@
+<div id="material-modal" class="modal modal-modern @(showModal ? "show d-block" : "")" style="@(showModal ? "background-color: rgba(0,0,0,.6);" : "")">
     <div class="modal-dialog">
         <div class="modal-content">
 
             <EditForm Model="@(IsEditing ? (object)EditMaterialDto : (object)NewMaterialDto)"
-                     OnValidSubmit="@(IsEditing ? HandleEditMaterial : HandleUploadMaterial)">
+                      OnValidSubmit="@(IsEditing ? HandleEditMaterial : HandleUploadMaterial)">
 
                 <DataAnnotationsValidator />
 
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">
+                    <h5 id="modal-title" class="modal-title">
                         @(IsEditing ? "Edit Material" : "Upload New Material")
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="HideModal"></button>
+                    @* ------------------- Modal Close Button (ID ADDED) ------------------- *@
+                    <button id="modal-close-btn" type="button" class="btn-close btn-close-white" @onclick="HideModal"></button>
                 </div>
 
                 <div class="modal-body">
 
                     <div class="mb-3">
                         <label class="form-label">Title</label>
-
+                        @* ------------------- Title Input (ID ADDED) ------------------- *@
                         @if (IsEditing)
                         {
-                            <InputText class="form-control" @bind-Value="@EditMaterialDto.Title" />
+                            <InputText id="edit-title-input" class="form-control" @bind-Value="@EditMaterialDto.Title" />
                         }
                         else
                         {
-                            <InputText class="form-control" @bind-Value="@NewMaterialDto.Title" />
+                            <InputText id="new-title-input" class="form-control" @bind-Value="@NewMaterialDto.Title" />
                         }
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Description</label>
-
+                        @* ------------------- Description Input (ID ADDED) ------------------- *@
                         @if (IsEditing)
                         {
-                            <InputTextArea class="form-control" @bind-Value="@EditMaterialDto.Description" />
+                            <InputTextArea id="edit-description-input" class="form-control" @bind-Value="@EditMaterialDto.Description" />
                         }
                         else
                         {
-                            <InputTextArea class="form-control" @bind-Value="@NewMaterialDto.Description" />
+                            <InputTextArea id="new-description-input" class="form-control" @bind-Value="@NewMaterialDto.Description" />
                         }
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">@((IsEditing ? "Replace File (Optional)" : "Choose File"))</label>
-
+                        @* ------------------- File Input (ID ADDED) ------------------- *@
                         @if (IsEditing)
                         {
-                            <InputFile OnChange="HandleEditFileSelection" class="form-control" />
+                            <InputFile id="edit-file-input" OnChange="HandleEditFileSelection" class="form-control" />
                         }
                         else
                         {
-                            <InputFile OnChange="HandleFileSelection" class="form-control" />
+                            <InputFile id="new-file-input" OnChange="HandleFileSelection" class="form-control" />
                             @if (uploadFile == null && uploadSubmitted)
                             {
                                 <small class="text-danger">File is required</small>
@@ -157,15 +167,18 @@
                         }
                     </div>
 
+                    @* ------------------- Upload/Edit Error (ID ADDED) ------------------- *@
                     @if (uploadError != null)
                     {
-                        <div class="alert alert-danger">@uploadError</div>
+                        <div id="modal-upload-error" class="alert alert-danger">@uploadError</div>
                     }
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-soft" @onclick="HideModal">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-soft" disabled="@isUploading">
+                    @* ------------------- Cancel Button (ID ADDED) ------------------- *@
+                    <button id="modal-cancel-btn" type="button" class="btn btn-secondary btn-soft" @onclick="HideModal">Cancel</button>
+                    @* ------------------- Submit Button (ID ADDED) ------------------- *@
+                    <button id="modal-submit-btn" type="submit" class="btn btn-primary btn-soft" disabled="@isUploading">
                         @if (isUploading)
                         {
                             <span class="spinner-border spinner-border-sm me-2"></span>
@@ -178,11 +191,6 @@
         </div>
     </div>
 </div>
-
-@code {
-    /* ----- Your existing C# code (unchanged) ----- */
-}
-
 
 @code {
  
@@ -246,20 +254,20 @@
 
     protected override async Task OnInitializedAsync()
     {
-    var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+    var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
 
-        if (!user.Identity?.IsAuthenticated ?? false)
-        {
-            NavigationManager.NavigateTo("/", true, replace: true);
-            return;
-        }
+        if (!user.Identity?.IsAuthenticated ?? false)
+        {
+            NavigationManager.NavigateTo("/", true, replace: true);
+            return;
+        }
 
-        if (!user.IsInRole("Teacher"))
-        {
-            NavigationManager.NavigateTo("/forbidden", true, replace: true);
-            return;
-        }
+        if (!user.IsInRole("Teacher"))
+        {
+            NavigationManager.NavigateTo("/forbidden", true, replace: true);
+            return;
+        }
         await LoadMaterials();
     }
     

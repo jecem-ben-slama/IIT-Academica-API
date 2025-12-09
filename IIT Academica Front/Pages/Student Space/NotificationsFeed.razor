@@ -4,14 +4,14 @@
 @inject NotificationService NotificationService
 @inject IJSRuntime JSRuntime
 
-<div class="p-0">
-    <h2 class="mb-4 text-primary">🔔 Campus Notification Feed</h2>
+<div id="notification-feed-container" class="p-0">
+    <h2 id="feed-main-title" class="mb-4 text-primary">🔔 Campus Notification Feed</h2>
     <hr />
 
-    @* --- Loading State --- *@
+    @* ------------------- Loading State (ID ADDED) ------------------- *@
     @if (IsLoading)
     {
-        <div class="text-center p-5">
+        <div id="loading-state" class="text-center p-5">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
@@ -19,20 +19,21 @@
         </div>
     }
 
-    @* --- Error State --- *@
+    @* ------------------- Error State (ID ADDED) ------------------- *@
     else if (LoadingError != null)
     {
-        <div class="alert alert-danger" role="alert">
+        <div id="error-state" class="alert alert-danger" role="alert">
             <h4 class="alert-heading">Connection Error</h4>
             <p>Could not load the notification feed. Details: @LoadingError</p>
-            <button class="btn btn-sm btn-outline-danger mt-2" @onclick="() => OnRetryLoading.InvokeAsync()">Retry Loading</button>
+            @* ------------------- Retry Button (ID ADDED) ------------------- *@
+            <button id="retry-loading-btn" class="btn btn-sm btn-outline-danger mt-2" @onclick="() => OnRetryLoading.InvokeAsync()">Retry Loading</button>
         </div>
     }
 
-    @* --- Data Display State --- *@
+    @* ------------------- Empty Data State (ID ADDED) ------------------- *@
     else if (Notifications == null || !Notifications.Any())
     {
-        <div class="alert alert-info text-center" role="alert">
+        <div id="no-notifications-state" class="alert alert-info text-center" role="alert">
             <i class="bi bi-bell-slash fs-4 me-2"></i>
             No new campus notifications available.
         </div>
@@ -44,9 +45,10 @@
         @* ======================================================= *@
         @if (FeaturedNotification != null)
         {
-            <div class="mb-4">
+            <div id="featured-notification-section" class="mb-4">
                 <h3 class="text-danger"><i class="bi bi-pin-angle-fill me-2"></i> Featured Announcement</h3>
-                <div class="card border-danger shadow-lg notification-card expanded"> @* Always expanded and highlighted *@
+                @* ------------------- Featured Card (ID ADDED) ------------------- *@
+                <div id="featured-card-@FeaturedNotification.Id" class="card border-danger shadow-lg notification-card expanded"> @* Always expanded and highlighted *@
                     
                     @* Card Header *@
                     <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
@@ -74,7 +76,8 @@
                         @* Download Attached File Button *@
                         @if (!string.IsNullOrEmpty(FeaturedNotification.FileUrl))
                         {
-                            <button class="btn btn-sm btn-danger mt-3" 
+                            @* ------------------- Featured Download Button (ID ADDED) ------------------- *@
+                            <button id="featured-download-btn-@FeaturedNotification.Id" class="btn btn-sm btn-danger mt-3" 
                                     @onclick="() => DownloadAttachedFile(FeaturedNotification.Id, FeaturedNotification.FileUrl)">
                                 <i class="bi bi-file-earmark-arrow-down-fill me-2"></i> 
                                 Download Attachment
@@ -84,21 +87,23 @@
                 </div>
             </div>
             <hr class="my-4"/>
-            <h3 class="mb-3 text-secondary">General Feed</h3>
+            <h3 id="general-feed-title" class="mb-3 text-secondary">General Feed</h3>
         }
 
 
         @* ======================================================= *@
         @* --- STANDARD NOTIFICATION FEED --- *@
         @* ======================================================= *@
-        <div class="row row-cols-1 g-3">
+        <div id="standard-notifications-list" class="row row-cols-1 g-3">
             @foreach (var notification in StandardNotifications.OrderByDescending(n => n.PostedDate))
             {
                 <div class="col">
-                    <div class="card shadow-sm notification-card @(ExpandedNotificationId == notification.Id ? "expanded" : "")">
+                    @* ------------------- Standard Card (ID ADDED) ------------------- *@
+                    <div id="standard-card-@notification.Id" class="card shadow-sm notification-card @(ExpandedNotificationId == notification.Id ? "expanded" : "")">
                         
                         @* --- Card Header (Clickable for Expansion) --- *@
-                        <div class="card-header d-flex justify-content-between align-items-center"
+                        @* ------------------- Toggle Header (ID ADDED) ------------------- *@
+                        <div id="toggle-header-@notification.Id" class="card-header d-flex justify-content-between align-items-center"
                              @onclick="() => ToggleExpansion(notification.Id)" role="button">
                             
                             <h5 class="mb-0 text-dark">
@@ -114,7 +119,8 @@
                         @* --- Collapsible Card Body (Content) --- *@
                         @if (ExpandedNotificationId == notification.Id)
                         {
-                            <div class="card-body">
+                            @* ------------------- Expanded Body (ID ADDED) ------------------- *@
+                            <div id="expanded-body-@notification.Id" class="card-body">
                                 
                                 @* Display Image if available *@
                                 @if (!string.IsNullOrEmpty(notification.ImageUrl) && !string.IsNullOrEmpty(ImageContent))
@@ -129,7 +135,8 @@
                                 @* Download Attached File Button *@
                                 @if (!string.IsNullOrEmpty(notification.FileUrl))
                                 {
-                                    <button class="btn btn-sm btn-outline-primary mt-3" 
+                                    @* ------------------- Standard Download Button (ID ADDED) ------------------- *@
+                                    <button id="standard-download-btn-@notification.Id" class="btn btn-sm btn-outline-primary mt-3" 
                                             @onclick="() => DownloadAttachedFile(notification.Id, notification.FileUrl)">
                                         <i class="bi bi-file-earmark-arrow-down-fill me-2"></i> 
                                         Download Attachment

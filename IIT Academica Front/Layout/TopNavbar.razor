@@ -1,18 +1,22 @@
 @inject NavigationManager NavigationManager
 @inject AuthService AuthService
 
-<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom shadow-sm">
+@* ------------------- NAV BAR CONTAINER (ID ADDED) ------------------- *@
+<nav id="top-navbar" class="navbar navbar-expand-lg navbar-light bg-light border-bottom shadow-sm">
     <div class="container-fluid">
-        <a class="navbar-brand text-primary fw-bold fs-4">
+        @* ------------------- Brand Link (ID ADDED) ------------------- *@
+        <a id="navbar-brand-link" href="/" class="navbar-brand text-primary fw-bold fs-4">
             <i class="bi bi-book-half"></i> IIT ACADEMICA
         </a>
 
         <div class="d-flex">
-            <a href="/admin/settings" class="btn btn-outline-secondary me-2">
+            @* ------------------- Settings Link (ID ADDED) ------------------- *@
+            <a id="settings-link" href="/admin/settings" class="btn btn-outline-secondary me-2">
                 <i class="bi bi-gear-fill"></i> Settings
             </a>
 
-            <button class="btn btn-danger" @onclick="HandleLogout">
+            @* ------------------- Logout Button (ID ADDED) ------------------- *@
+            <button id="logout-btn" class="btn btn-danger" @onclick="HandleLogout">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </button>
         </div>

@@ -14,22 +14,32 @@
 @inject NavigationManager NavigationManager
 @inject UserService UserService
 
-<div class="admin-content mt-4">
+@* ------------------- MAIN CONTENT CONTAINER (ID ADDED) ------------------- *@
+<div id="admin-dashboard-content" class="admin-content mt-4">
     @if (SelectedRole == "" || SelectedRole == "Teacher")
     {
-        <UserManagementView Students="Users" />
+        @* ------------------- USER MANAGEMENT VIEW CONTAINER (ID ADDED) ------------------- *@
+        <div id="view-user-management">
+            <UserManagementView Students="Users" />
+        </div>
     }
     else if (SelectedRole == "Subjects")
     {
-        <SubjectsView />
+        @* ------------------- SUBJECTS VIEW CONTAINER (ID ADDED) ------------------- *@
+        <div id="view-subjects">
+            <SubjectsView />
+        </div>
     }
     else if (SelectedRole == "Notifications")
     {
-         <NotificationsView />
+        @* ------------------- NOTIFICATIONS VIEW CONTAINER (ID ADDED) ------------------- *@
+        <div id="view-notifications">
+            <NotificationsView />
+        </div>
     }
     else
     {
-        <p>Unknown view</p>
+        <p id="view-unknown">Unknown view</p>
     }
 </div>
 
@@ -72,6 +82,7 @@
 
     private void SelectRoleFilter(string role)
     {
+        // Toggle logic: If the same role is clicked, clear the filter. Otherwise, set the new role.
         SelectedRole = (SelectedRole == role) ? string.Empty : role;
         if (AdminLayoutContext != null)
             AdminLayoutContext.SelectedRole = SelectedRole;

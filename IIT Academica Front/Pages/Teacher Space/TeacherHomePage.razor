@@ -7,48 +7,49 @@
 
 <TopNavbar/>
 
-<div class="container mt-5">
+<div id="teacher-dashboard-main" class="container mt-5">
     <div class="d-flex align-items-center mb-5">
-        <h2 class="text-primary fw-bold me-3">My Assigned Sections</h2>
+        <h2 id="dashboard-title" class="text-primary fw-bold me-3">My Assigned Sections</h2>
         <span class="badge bg-primary-subtle text-primary">Teacher Dashboard</span>
     </div>
 
-    @* --- Loading State --- *@
+    @* --- Loading State (ID ADDED) --- *@
     @if (isLoading)
     {
-        <div class="text-center p-5 border rounded-3 bg-light">
+        <div id="loading-state" class="text-center p-5 border rounded-3 bg-light">
             <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                 <span class="visually-hidden">Loading...</span>
             </div>
             <p class="mt-3 fs-5 text-muted">Fetching your assigned subjects...</p>
         </div>
     }
-    @* --- Error State --- *@
+    @* --- Error State (ID ADDED) --- *@
     else if (errorMessage != null)
     {
-        <div class="alert alert-danger p-4 shadow-sm" role="alert">
+        <div id="error-state" class="alert alert-danger p-4 shadow-sm" role="alert">
             <h4 class="alert-heading d-flex align-items-center"><i class="bi bi-x-octagon-fill me-2"></i> Loading Error</h4>
             <p>@errorMessage</p>
             <hr>
             <p class="mb-0">Please check your network connection or try logging in again.</p>
         </div>
     }
-    @* --- Empty State --- *@
+    @* --- Empty State (ID ADDED) --- *@
     else if (Subjects == null || !Subjects.Any())
     {
-        <div class="alert alert-info p-4 shadow-sm" role="alert">
+        <div id="empty-state" class="alert alert-info p-4 shadow-sm" role="alert">
             <h4 class="alert-heading d-flex align-items-center"><i class="bi bi-info-circle-fill me-2"></i> No Subjects Assigned</h4>
             <p class="mb-0">You currently have no subjects or sections assigned to you. Please contact administration.</p>
         </div>
     }
-    @* --- Content Grid --- *@
+    @* --- Content Grid (ID ADDED) --- *@
     else
     {
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <div id="subjects-grid" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             @foreach (var subject in Subjects)
             {
                 <div class="col">
-                    <div class="subject-card-enhanced h-100 shadow-sm border-0" @onclick="() => GoToMaterials(subject.Id)">
+                    @* ------------------- Subject Card (ID ADDED) ------------------- *@
+                    <div id="subject-card-@subject.Id" class="subject-card-enhanced h-100 shadow-sm border-0" @onclick="() => GoToMaterials(subject.Id)">
                         <div class="card-body p-4">
                             <i class="bi bi-journals fs-3 text-primary mb-2 d-block"></i>
                             <h5 class="card-title text-dark fw-bold mb-1">@subject.SubjectName</h5>
@@ -56,7 +57,8 @@
                         </div>
                         <div class="card-footer bg-light border-top-0 p-3">
                             <div class="d-grid">
-                                <button class="btn btn-sm btn-primary-outline btn-manage-action">
+                                @* ------------------- Manage Materials Button (ID ADDED) ------------------- *@
+                                <button id="manage-materials-btn-@subject.Id" class="btn btn-sm btn-primary-outline btn-manage-action">
                                     <i class="bi bi-folder-fill me-2"></i> View & Manage Materials
                                 </button>
                             </div>
@@ -70,51 +72,51 @@
 
 
 @code {
-    // Assuming SubjectDTO is available via a using statement or defined in IIT_Academica_Front.Models
-    // For compilation, ensure the DTO is accessible.
-    // Placeholder for required DTO:
-   
+    // Assuming SubjectDTO is available via a using statement or defined in IIT_Academica_Front.Models
+    // For compilation, ensure the DTO is accessible.
+    // Placeholder for required DTO:
+   
 
-    private List<SubjectDTO>? Subjects;
-    private string? errorMessage;
-    private bool isLoading = true;
+    private List<SubjectDTO>? Subjects;
+    private string? errorMessage;
+    private bool isLoading = true;
 
-    protected override async Task OnInitializedAsync()
-    {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
 
-        if (!user.Identity?.IsAuthenticated ?? false)
-        {
-            NavigationManager.NavigateTo("/", true, replace: true);
-            return;
-        }
+        if (!user.Identity?.IsAuthenticated ?? false)
+        {
+            NavigationManager.NavigateTo("/", true, replace: true);
+            return;
+        }
 
-        if (!user.IsInRole("Teacher"))
-        {
-            NavigationManager.NavigateTo("/forbidden", true, replace: true);
-            return;
-        }
-        try
-        {
-            Subjects = await SubjectService.GetMySectionsAsync();
-        }
-        catch (HttpRequestException ex)
-        {
-            errorMessage = $"Failed to connect to the API or authorization error occurred. Details: {ex.Message}";
-        }
-        catch (Exception)
-        {
-            errorMessage = "An unexpected error occurred while fetching subjects.";
-        }
-        finally
-        {
-            isLoading = false;
-        }
-    }
+        if (!user.IsInRole("Teacher"))
+        {
+            NavigationManager.NavigateTo("/forbidden", true, replace: true);
+            return;
+        }
+        try
+        {
+            Subjects = await SubjectService.GetMySectionsAsync();
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = $"Failed to connect to the API or authorization error occurred. Details: {ex.Message}";
+        }
+        catch (Exception)
+        {
+            errorMessage = "An unexpected error occurred while fetching subjects.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
 
-    private void GoToMaterials(int subjectId)
-    {
-        NavigationManager.NavigateTo($"/teacher/subject/{subjectId}/materials");
-    }
+    private void GoToMaterials(int subjectId)
+    {
+        NavigationManager.NavigateTo($"/teacher/subject/{subjectId}/materials");
+    }
 }

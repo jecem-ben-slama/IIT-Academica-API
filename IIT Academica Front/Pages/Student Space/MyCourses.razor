@@ -2,27 +2,27 @@
 @using IIT_Academica_DTOs.Enrollment_DTOs
 @inject NavigationManager Navigation
 
-<div class="card shadow-lg h-100 enrolled-courses-widget">
+<div id="enrolled-courses-widget" class="card shadow-lg h-100 enrolled-courses-widget">
     <div class="card-header bg-info text-white">
         <h4 class="mb-0 fw-bold">
             <i class="bi bi-bookmark-check-fill me-2"></i> My Enrolled Courses
         </h4>
     </div>
     <div class="card-body p-0">
-        @* --- Loading State --- *@
+        @* ------------------- Loading State (ID ADDED) ------------------- *@
         @if (IsLoadingMyCourses)
         {
-            <div class="text-center p-4">
+            <div id="loading-my-courses-state" class="text-center p-4">
                 <div class="spinner-border text-info" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
                 <p class="mt-2 text-muted">Loading your courses...</p>
             </div>
         }
-        @* --- Empty State --- *@
+        @* ------------------- Empty State (ID ADDED) ------------------- *@
         else if (EnrolledCourses == null || !EnrolledCourses.Any())
         {
-            <div class="alert alert-light text-center m-3 p-4 border-info" role="alert">
+            <div id="no-enrolled-courses" class="alert alert-light text-center m-3 p-4 border-info" role="alert">
                 <i class="bi bi-exclamation-circle-fill fs-4 text-info d-block mb-2"></i>
                 <p class="mb-0 fw-semibold">You are not currently enrolled in any subjects.</p>
                 <small class="text-muted">Explore the 'Available Courses' section to enroll.</small>
@@ -31,18 +31,23 @@
         @* --- Course List --- *@
         else
         {
-            <ul class="list-group list-group-flush course-list">
+            @* ------------------- Course List Container (ID ADDED) ------------------- *@
+            <ul id="my-course-list" class="list-group list-group-flush course-list">
                 @foreach (var course in EnrolledCourses)
                 {
-                    <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                    @* ------------------- List Item (ID ADDED) ------------------- *@
+                    <li id="enrolled-item-@course.SubjectId" class="list-group-item d-flex justify-content-between align-items-center p-3">
                         
-                        <div class="course-link-area" @onclick="() => NavigateToMaterials(course.SubjectId)" role="button" title="View Course Materials">
+                        @* ------------------- Course Link Area (ID ADDED) ------------------- *@
+                        <div id="course-link-@course.SubjectId" class="course-link-area" @onclick="() => NavigateToMaterials(course.SubjectId)" role="button" title="View Course Materials">
                             <i class="bi bi-book-fill me-2 text-info"></i>
-                            <span class="fw-bold course-title text-dark">@course.CourseTitle</span>
+                            @* ------------------- Course Title (ID ADDED) ------------------- *@
+                            <span id="course-title-@course.SubjectId" class="fw-bold course-title text-dark">@course.CourseTitle</span>
                             <small class="text-muted d-block ms-4">ID: @course.SubjectId</small>
                         </div>
                         
-                        <button class="btn btn-sm btn-outline-danger drop-button" @onclick="() => OnDropCourse.InvokeAsync(course)">
+                        @* ------------------- Drop Button (ID ADDED) ------------------- *@
+                        <button id="drop-course-btn-@course.SubjectId" class="btn btn-sm btn-outline-danger drop-button" @onclick="() => OnDropCourse.InvokeAsync(course)">
                             <i class="bi bi-box-arrow-right"></i> Drop
                         </button>
                     </li>

@@ -1,27 +1,27 @@
 @* This component displays the list of all available subjects. *@
 @using IIT_Academica_DTOs.Enrollment_DTOs
 
-<div class="card shadow-lg h-100 available-subjects-widget">
+<div id="available-subjects-widget" class="card shadow-lg h-100 available-subjects-widget">
     <div class="card-header bg-dark text-white">
         <h4 class="mb-0 fw-bold">
             <i class="bi bi-book-half me-2"></i> Available Subjects
         </h4>
     </div>
     <div class="card-body p-0">
-        @* --- Loading State --- *@
+        @* ------------------- Loading State (ID ADDED) ------------------- *@
         @if (IsLoadingAllSubjects)
         {
-            <div class="text-center p-4">
+            <div id="loading-subjects-state" class="text-center p-4">
                 <div class="spinner-border text-dark" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
                 <p class="mt-2 text-muted">Loading available subjects...</p>
             </div>
         }
-        @* --- Empty State --- *@
+        @* ------------------- Empty State (ID ADDED) ------------------- *@
         else if (AvailableSubjects == null || !AvailableSubjects.Any())
         {
-            <div class="alert alert-warning text-center m-3 p-4 border-dark" role="alert">
+            <div id="no-subjects-available" class="alert alert-warning text-center m-3 p-4 border-dark" role="alert">
                 <i class="bi bi-exclamation-triangle-fill fs-4 text-warning d-block mb-2"></i>
                 <p class="mb-0 fw-semibold">No subjects are currently available for enrollment.</p>
                 <small class="text-muted">Please check back later.</small>
@@ -36,11 +36,14 @@
                     // Determine if the student is enrolled in this subject
                     bool isEnrolled = EnrolledCourses?.Any(c => c.SubjectId == subject.Id) ?? false;
 
-                    <li class="list-group-item d-flex justify-content-between align-items-center p-3 
+                    @* ------------------- List Item (ID ADDED) ------------------- *@
+                    <li id="subject-item-@subject.Id" 
+                        class="list-group-item d-flex justify-content-between align-items-center p-3 
                         @(isEnrolled ? "enrolled-item list-group-item-secondary" : "available-item")">
                         
                         <div>
-                            <span class="fw-bold @(isEnrolled ? "text-muted" : "text-dark")">
+                            @* ------------------- Subject Name (ID ADDED) ------------------- *@
+                            <span id="subject-name-@subject.Id" class="fw-bold @(isEnrolled ? "text-muted" : "text-dark")">
                                 @subject.SubjectName
                             </span>
                             <small class="text-muted d-block">Section: @subject.Id</small>
@@ -48,13 +51,16 @@
                         
                         @if (isEnrolled)
                         {
-                            <span class="badge bg-success enrolled-tag">
+                            @* ------------------- Enrolled Tag (ID ADDED) ------------------- *@
+                            <span id="enrolled-tag-@subject.Id" class="badge bg-success enrolled-tag">
                                 <i class="bi bi-check-circle-fill me-1"></i> Enrolled
                             </span>
                         }
                         else
                         {
-                            <button class="btn btn-sm btn-primary enroll-button" 
+                            @* ------------------- Enroll Button (ID ADDED) ------------------- *@
+                            <button id="enroll-btn-@subject.Id" 
+                                    class="btn btn-sm btn-primary enroll-button" 
                                     @onclick="() => OnEnrollmentRequested.InvokeAsync(subject)">
                                 <i class="bi bi-plus-circle-fill me-1"></i> Enroll
                             </button>
