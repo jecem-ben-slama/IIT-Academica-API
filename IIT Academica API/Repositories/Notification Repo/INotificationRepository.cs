@@ -1,7 +1,4 @@
-﻿// Repositories/INotificationRepository.cs
-using IIT_Academica_API.Entities;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using IIT_Academica_API.Entities;
 
 public interface INotificationRepository
 {
@@ -10,6 +7,5 @@ public interface INotificationRepository
     Task<Notification> UpdateAsync(Notification notification);
     Task<bool> DeleteAsync(int id);
 
-    // Student View (Read All)
     Task<IEnumerable<Notification>> GetAllAsync();
 }

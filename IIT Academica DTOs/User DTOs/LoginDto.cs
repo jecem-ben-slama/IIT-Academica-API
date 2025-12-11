@@ -6,8 +6,8 @@ public class LoginDto
     [Required]
     [StringLength(100,ErrorMessage ="Email Too Long")]
     [EmailAddress]
-    public string Email { get; set; }
+    public string? Email { get; set; }
 
     [Required]
-    public string Password { get; set; }
+    public string? Password { get; set; }
 }

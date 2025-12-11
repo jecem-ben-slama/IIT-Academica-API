@@ -54,7 +54,10 @@
                             <i class="bi bi-journals fs-3 text-primary mb-2 d-block"></i>
                             <h5 class="card-title text-dark fw-bold mb-1">@subject.SubjectName</h5>
                             <p class="card-text text-muted mb-0">Section ID: <span class="fw-semibold">@subject.Id</span></p>
+                                                        <p class="card-text text-muted mb-0">Enrollment Count: <span class="fw-semibold">@subject.EnrollmentCount</span></p>
+
                         </div>
+                        
                         <div class="card-footer bg-light border-top-0 p-3">
                             <div class="d-grid">
                                 @* ------------------- Manage Materials Button (ID ADDED) ------------------- *@
@@ -72,9 +75,7 @@
 
 
 @code {
-    // Assuming SubjectDTO is available via a using statement or defined in IIT_Academica_Front.Models
-    // For compilation, ensure the DTO is accessible.
-    // Placeholder for required DTO:
+  
    
 
     private List<SubjectDTO>? Subjects;

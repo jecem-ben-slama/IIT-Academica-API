@@ -1,6 +1,7 @@
 @namespace SubjectsView
 @using IIT_Academica_Front.Models
 @using System.Security.Claims
+@using DeleteConfirmationModal
 @inject SubjectService SubjectService
 @inject UserService UserService
 @inject IJSRuntime JSRuntime
@@ -68,7 +69,8 @@
                                 @* ------------------- Edit Button (ID ADDED) ------------------- *@
                                 <button id="edit-subject-btn-@subject.Id" class="btn btn-sm btn-info" @onclick="() => OpenEditForm(subject)">Edit</button>
                                 @* ------------------- Delete Button (ID ADDED) ------------------- *@
-                                <button id="delete-subject-btn-@subject.Id" class="btn btn-sm btn-danger" @onclick="() => DeleteSubject(subject.Id)">Delete</button>
+                                @* Use OpenDeleteModal instead of direct DeleteSubject call *@
+                                <button id="delete-subject-btn-@subject.Id" class="btn btn-sm btn-danger" @onclick="() => OpenDeleteModal(subject)">Delete</button>
                             </td>
                         </tr>
                     }
@@ -143,6 +145,19 @@
             </div>
         </div>
     }
+
+    @* ------------------- DELETE CONFIRMATION MODAL ------------------- *@
+    @if (ShowDeleteConfirm)
+    {
+        <DeleteConfirmationModal
+            Title="Confirm Deletion"
+            Message="@($"Are you sure you want to delete subject: {SubjectToDelete.SubjectName} ({SubjectToDelete.RegistrationCode})?")"
+            ConfirmButtonText="Delete Subject"
+            CustomError="@DeleteErrorMessage"
+            IsProcessing="@IsDeleting"
+            OnConfirm="HandleDeleteConfirm"
+            OnCancel="CloseDeleteModal" />
+    }
 </div>
 
 @code {
@@ -156,11 +171,16 @@
     // NEW STATE: Search Query
     private string SearchQuery = string.Empty; 
 
-    // --- Modal State ---
+    // --- Modal State (Create/Edit) ---
     private bool ShowModal = false;
     private int CurrentSubjectId = 0;
-    
     private CreateSubjectDto CurrentDto = new CreateSubjectDto();
+
+    // --- Modal State (Delete) ---
+    private bool ShowDeleteConfirm = false;
+    private SubjectDTO SubjectToDelete = new SubjectDTO();
+    private bool IsDeleting = false;
+    private string DeleteErrorMessage = string.Empty;
 
     // NEW LOGIC: Filtered Subjects Property
     private IEnumerable<SubjectDTO> FilteredSubjects => Subjects?
@@ -219,6 +239,7 @@
     {
         try
         {
+            // Assuming GetAllUsersAsync returns all users, and we filter for "Teacher" role.
             var allUsers = await UserService.GetAllUsersAsync();
             Teachers = allUsers?
                 .Where(u => u.Role == "Teacher")
@@ -232,7 +253,7 @@
         }
     }
 
-    // --- CRUD Operations ---
+    // --- CRUD Operations (Create/Update) ---
 
     private async Task HandleSubmit()
     {
@@ -274,30 +295,67 @@
         }
         catch (HttpRequestException ex)
         {
+            // Parse a more helpful error message if possible
             ModalErrorMessage = $"API Error: {ex.Message}";
         }
     }
 
-    private async Task DeleteSubject(int id)
-    {
-        if (!await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this subject? This action cannot be undone."))
-        {
-            return;
-        }
+    // --- CRUD Operations (Delete) ---
 
-        ErrorMessage = string.Empty;
+    private void OpenDeleteModal(SubjectDTO subject)
+    {
+        SubjectToDelete = subject;
+        DeleteErrorMessage = string.Empty;
+        ShowDeleteConfirm = true;
+    }
+
+    private void CloseDeleteModal()
+    {
+        ShowDeleteConfirm = false;
+        IsDeleting = false;
+        DeleteErrorMessage = string.Empty;
+        SubjectToDelete = new SubjectDTO();
+    }
+    
+    private async Task HandleDeleteConfirm()
+    {
+        IsDeleting = true;
+        DeleteErrorMessage = string.Empty;
+        
         try
         {
-            await SubjectService.DeleteSubjectAsync(id);
-            await LoadSubjectsAsync(); // Refresh list
+            await SubjectService.DeleteSubjectAsync(SubjectToDelete.Id);
+            
+            // Success: Close modal and refresh list
+            CloseDeleteModal();
+            await LoadSubjectsAsync();
         }
         catch (HttpRequestException ex)
         {
-            ErrorMessage = $"Deletion failed: {ex.Message}. If the subject is enrolled by students, you may need to drop them first.";
+            // Check for specific conflict status (e.g., 409 Conflict) from the API
+            string detailMessage = ex.Message;
+            
+            if (ex.StatusCode == System.Net.HttpStatusCode.Conflict)
+            {
+                // Custom error for existing enrollments (from the server-side change)
+                DeleteErrorMessage = "Cannot delete this subject because active student enrollments exist. Please ensure all students are dropped from this subject first.";
+            }
+            else
+            {
+                DeleteErrorMessage = $"Deletion failed: {detailMessage}";
+            }
+        }
+        catch (Exception ex)
+        {
+            DeleteErrorMessage = $"An unexpected error occurred: {ex.Message}";
+        }
+        finally
+        {
+            IsDeleting = false;
         }
     }
 
-    // --- Modal Control ---
+    // --- Modal Control (Create/Edit) ---
 
     private void OpenCreateForm()
     {

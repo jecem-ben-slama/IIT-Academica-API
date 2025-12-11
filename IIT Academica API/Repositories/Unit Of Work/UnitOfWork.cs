@@ -1,22 +1,16 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-public class UnitOfWork : IUnitOfWork
+public class UnitOfWork(ApplicationDbContext context, UserManager<ApplicationUser> userManager) : IUnitOfWork
 {
-    private readonly ApplicationDbContext _context;
+    private readonly ApplicationDbContext _context = context;
 
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly UserManager<ApplicationUser> _userManager = userManager;
 
-    private IUserRepository _userRepository;
-    private ISubjectRepository _subjectRepository;
-    private IEnrollmentRepository _enrollmentRepository;
-    private ICourseMaterialRepository _courseMaterialRepository;
-    private INotificationRepository _notificationRepository;
-
-    public UnitOfWork(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
-    {
-        _context = context;
-        _userManager = userManager;
-    }
+    private IUserRepository? _userRepository;
+    private ISubjectRepository? _subjectRepository;
+    private IEnrollmentRepository? _enrollmentRepository;
+    private ICourseMaterialRepository? _courseMaterialRepository;
+    private INotificationRepository? _notificationRepository;
 
     public IUserRepository Users =>
         _userRepository ??= new UserRepository(_context, _userManager);

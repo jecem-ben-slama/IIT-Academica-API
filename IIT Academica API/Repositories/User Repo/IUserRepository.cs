@@ -1,7 +1,4 @@
-﻿using IIT_Academica_API.Entities;
-using Microsoft.AspNetCore.Identity; 
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Identity;
 
 public interface IUserRepository
 {
@@ -16,12 +13,12 @@ public interface IUserRepository
 
     Task<IList<string>> GetUserRolesAsync(ApplicationUser user);
 
-   Task<ApplicationUser?> ValidateCredentialsAsync(string email, string password);
+    Task<ApplicationUser?> ValidateCredentialsAsync(string email, string password);
 
-  
+
     Task<IdentityResult> UpdateAsync(ApplicationUser user);
 
-    
+
     Task<IdentityResult> DeleteAsync(ApplicationUser user);
 
     Task<IEnumerable<ApplicationUser>> GetUsersByRoleAsync(string roleName);
@@ -29,12 +26,11 @@ public interface IUserRepository
     Task<IEnumerable<ApplicationUser>> GetStudentsInTeacherSubjectAsync(int spaceId);
     Task<string?> GetUserRoleAsync(ApplicationUser user);
     Task<IdentityResult> AddToRoleAsync(ApplicationUser user, string role);
-Task<IdentityResult> RemoveFromRoleAsync(ApplicationUser user, string role);
-Task<string?> GeneratePasswordResetTokenAsync(string email); 
-    
-    // Resets the user's password using the provided token and the new password.
+    Task<IdentityResult> RemoveFromRoleAsync(ApplicationUser user, string role);
+    Task<string?> GeneratePasswordResetTokenAsync(string email);
+
     Task<IdentityResult> ResetPasswordAsync(string email, string token, string newPassword);
 
 
-    
+
 }

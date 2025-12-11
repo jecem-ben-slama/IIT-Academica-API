@@ -1,21 +1,14 @@
-﻿// Repositories/IEnrollmentRepository.cs
-using IIT_Academica_API.Entities;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
+﻿using IIT_Academica_API.Entities;
 public interface IEnrollmentRepository
 {
-    // --- Core Enrollment CRUD ---
     Task<Enrollment> AddEnrollmentAsync(Enrollment enrollment);
-    Task<bool> DeleteEnrollmentAsync(int enrollmentId); // For hard deletion
+    Task<bool> DeleteEnrollmentAsync(int enrollmentId);
 
-    // --- Student Viewing ---
     Task<IEnumerable<Enrollment>> GetEnrollmentsByStudentIdAsync(int studentId);
 
-    // --- Student Drop Helper (Ensures security) ---
     Task<bool> DeleteEnrollmentByStudentAndIdAsync(int enrollmentId, int studentId);
 
-    // --- Helpers for Enrollment Process ---
     Task<Subject?> GetSubjectByRegistrationCodeAsync(string registrationCode);
     Task<bool> IsStudentAlreadyEnrolledAsync(int studentId, int subjectId);
+    Task<bool> HasActiveEnrollmentsForSubject(int subjectId);
 }

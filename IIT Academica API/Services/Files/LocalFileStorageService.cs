@@ -1,11 +1,4 @@
-﻿// Services/LocalFileStorageService.cs
-using Microsoft.AspNetCore.Http;
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-
-public class LocalFileStorageService : IFileStorageService
+﻿public class LocalFileStorageService : IFileStorageService
 {
     private readonly string _uploadPath = "Uploads"; // Folder name
     private readonly string _baseDirectory;

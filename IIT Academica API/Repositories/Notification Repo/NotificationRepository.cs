@@ -1,9 +1,5 @@
-﻿// Repositories/NotificationRepository.cs
-using IIT_Academica_API.Entities;
+﻿using IIT_Academica_API.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 public class NotificationRepository : INotificationRepository
 {
@@ -40,7 +36,6 @@ public class NotificationRepository : INotificationRepository
         return true;
     }
 
-    // Orders by date, newest first
     public async Task<IEnumerable<Notification>> GetAllAsync()
     {
         return await _context.Notifications

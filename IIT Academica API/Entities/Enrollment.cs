@@ -1,4 +1,4 @@
-﻿using System;
+﻿
 
 namespace IIT_Academica_API.Entities
 {
@@ -7,13 +7,12 @@ namespace IIT_Academica_API.Entities
         public int Id { get; set; }
 
         public int StudentId { get; set; }
-        public ApplicationUser Student { get; set; }
+        public ApplicationUser? Student { get; set; }
 
-        // Reworked: Foreign Key points to the TeacherSubject
         public int SubjectId { get; set; }
-        public Subject Subject { get; set; }
+        public Subject? Subject { get; set; }
 
         public DateTime EnrollmentDate { get; set; }
-        public string Status { get; set; }
+        public string? Status { get; set; }
     }
 }

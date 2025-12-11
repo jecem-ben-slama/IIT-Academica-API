@@ -1,5 +1,4 @@
-﻿// Controllers/SubjectController.cs
-using IIT_Academica_API.Entities;
+﻿using IIT_Academica_API.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -9,22 +8,22 @@ using System.Security.Claims;
 public class SubjectsController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IEnrollmentRepository _enrollmentRepository;
 
-    public SubjectsController(IUnitOfWork unitOfWork)
+    public SubjectsController(IUnitOfWork unitOfWork,IEnrollmentRepository enrollmentRepository)
     {
         _unitOfWork = unitOfWork;
+        _enrollmentRepository=enrollmentRepository;
     }
 
     private ISubjectRepository Repository => _unitOfWork.Subjects;
 
-    // -------------------------------------------
-    // C R E A T E (POST)
-    // -------------------------------------------
+    //^ Create
     [HttpPost("createSubject")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<SubjectDTO>> CreateSubject([FromBody] CreateSubjectDto createDto)
     {
-        if (await Repository.CodeExistsAsync(createDto.RegistrationCode))
+        if (await Repository.CodeExistsAsync(createDto.RegistrationCode!))
         {
             return Conflict($"Registration Code '{createDto.RegistrationCode}' already exists.");
         }
@@ -53,13 +52,10 @@ public class SubjectsController : ControllerBase
             EnrollmentCount = 0
         };
 
-        // Uses the simple GET method defined below
         return CreatedAtAction(nameof(GetSubjectById), new { id = returnDto.Id }, returnDto);
     }
 
-    // -------------------------------------------
-    // R E A D A L L (GET)
-    // -------------------------------------------
+    //^ GetAll
     [HttpGet("getAll")]
     [Authorize(Roles = "Admin,Student")]
     public async Task<ActionResult<IEnumerable<SubjectDTO>>> GetAllSubjects()
@@ -79,9 +75,7 @@ public class SubjectsController : ControllerBase
         return Ok(dtos);
     }
 
-    // -------------------------------------------
-    // R E A D B Y I D (GET) (Used by GetAll and CreatedAtAction)
-    // -------------------------------------------
+    //^ Get By Id
     [HttpGet("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<SubjectDTO>> GetSubjectById(int id)
@@ -106,11 +100,7 @@ public class SubjectsController : ControllerBase
         return Ok(dto);
     }
 
-    // --- Missing CRUD Actions ---
-
-    // -------------------------------------------
-    // U P D A T E (PUT)
-    // -------------------------------------------
+    //^ Update
     [HttpPut("updateSubject/{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateSubject(int id, UpdateSubjectDTO updateDto)
@@ -127,54 +117,63 @@ public class SubjectsController : ControllerBase
             return NotFound();
         }
 
-        // 1. Map DTO changes onto the existing Entity
         existingEntity.Title = updateDto.SubjectName;
         existingEntity.TeacherId = updateDto.TeacherId;
-        existingEntity.RegistrationCode=updateDto.RegistrationCode;
-        
+        existingEntity.RegistrationCode = updateDto.RegistrationCode;
 
-        // 2. Mark as modified and commit
+
         await Repository.UpdateAsync(existingEntity);
         await _unitOfWork.CompleteAsync();
 
-        // Return 204 No Content for successful update
         return NoContent();
     }
 
-    // -------------------------------------------
-    // D E L E T E (DELETE)
-    // -------------------------------------------
+    //^ Delete
     [HttpDelete("delete/{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteSubject(int id)
     {
-        // DeleteAsync finds the entity and removes it
+         var subject = await Repository.GetByIdAsync(id);
+        if (subject == null)
+        {
+            return NotFound();
+        }
+
+       var hasEnrollments = await _enrollmentRepository.HasActiveEnrollmentsForSubject(id);
+
+        if (hasEnrollments)
+        {
+            return Conflict(new
+            {
+                message = "Cannot delete subject: Active enrollments exist.",
+                subjectId = id
+            });
+        }
+
         var deleted = await Repository.DeleteAsync(id);
 
-       await _unitOfWork.CompleteAsync();
+        await _unitOfWork.CompleteAsync();
 
         if (!deleted)
         {
             return NotFound();
         }
 
-        // Return 204 No Content for successful deletion
-        return NoContent();
+        return NoContent(); 
     }
+
+    //^  MySections
     [HttpGet("mySections")]
-    [Authorize(Roles = "Teacher")] // Secured for the Teacher role
+    [Authorize(Roles = "Teacher")]
     public async Task<ActionResult<IEnumerable<SubjectDTO>>> GetSubjectsByTeacher()
     {
-        // 1. Get Teacher ID from JWT claims
         if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int teacherId))
         {
             return Unauthorized("Teacher identity could not be retrieved from the token.");
         }
 
-        // 2. Retrieve entities assigned to this teacher, including enrollments
         var entities = await Repository.GetSubjectsByTeacherIdWithEnrollmentsAsync(teacherId);
 
-        // 3. Map Entity List to DTO List
         var dtos = entities.Select(e => new SubjectDTO
         {
             Id = e.Id,
@@ -182,7 +181,6 @@ public class SubjectsController : ControllerBase
             SubjectName = e.Title,
             TeacherId = e.TeacherId,
             TeacherFullName = e.Teacher?.Name + " " + e.Teacher?.LastName,
-            // Calculate Enrollment Count from the loaded collection
             EnrollmentCount = e.Enrollments?.Count ?? 0
         }).ToList();
 

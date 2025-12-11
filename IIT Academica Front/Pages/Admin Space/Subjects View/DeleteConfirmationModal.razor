@@ -1,0 +1,57 @@
+@namespace DeleteConfirmationModal
+<div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><span class="oi oi-warning me-2"></span> @Title</h5>
+                <button type="button" class="close" @onclick="OnCancel">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <p>@Message</p>
+                @if (!string.IsNullOrEmpty(CustomError))
+                {
+                    <div class="alert alert-danger mt-3">@CustomError</div>
+                }
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="OnCancel">Cancel</button>
+                <button type="button" class="btn btn-danger" @onclick="OnConfirm" disabled="@IsProcessing">
+                    @if (IsProcessing)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    @ConfirmButtonText
+                </button>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "Confirm Action";
+    
+    [Parameter]
+    public string Message { get; set; } = "Are you sure you want to proceed?";
+    
+    [Parameter]
+    public string ConfirmButtonText { get; set; } = "Delete";
+    
+    [Parameter]
+    public string CustomError { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool IsProcessing { get; set; } = false;
+
+    [Parameter]
+    public EventCallback OnConfirm { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+}
