@@ -18,12 +18,12 @@ public class AuthService : ApiService
         _authStateProvider = (CustomAuthenticationStateProvider)authStateProvider;
     }
 
-    
+
     public async Task<string?> GetTokenAsync()
     {
         return await LocalStorage.GetItemAsStringAsync(AuthTokenKey);
     }
-    
+
     public async Task EnsureAuthorizationHeaderAsync()
     {
         var token = await GetTokenAsync();
@@ -49,41 +49,41 @@ public class AuthService : ApiService
 
             if (authResponse == null)
             {
-                authResponse = new AuthResponseDto 
-                { 
-                    IsSuccess = false, 
-                    Message = $"Login failed: HTTP Status Code {response.StatusCode}. Could not parse response body." 
+                authResponse = new AuthResponseDto
+                {
+                    IsSuccess = false,
+                    Message = $"Login failed: HTTP Status Code {response.StatusCode}. Could not parse response body."
                 };
             }
 
-           
+
             if (authResponse.IsSuccess && !string.IsNullOrWhiteSpace(authResponse.Token))
             {
                 await LocalStorage.SetItemAsStringAsync(AuthTokenKey, authResponse.Token);
-                
+
                 _authStateProvider.MarkUserAsAuthenticated(authResponse.Token);
-                
+
                 await EnsureAuthorizationHeaderAsync();
-                
-                return authResponse; 
+
+                return authResponse;
             }
 
             return authResponse;
         }
         catch (HttpRequestException)
         {
-            return new AuthResponseDto 
-            { 
-                IsSuccess = false, 
-                Message = "API connection error. Please ensure the backend server is running and accessible." 
+            return new AuthResponseDto
+            {
+                IsSuccess = false,
+                Message = "API connection error. Please ensure the backend server is running and accessible."
             };
         }
         catch (Exception ex)
         {
-            return new AuthResponseDto 
-            { 
-                IsSuccess = false, 
-                Message = $"An unexpected client error occurred: {ex.Message}" 
+            return new AuthResponseDto
+            {
+                IsSuccess = false,
+                Message = $"An unexpected client error occurred: {ex.Message}"
             };
         }
     }
@@ -91,74 +91,74 @@ public class AuthService : ApiService
     public async Task Logout()
     {
         _authStateProvider.MarkUserAsLoggedOut();
-        
-        await LocalStorage.RemoveItemAsync(AuthTokenKey); 
-        
+
+        await LocalStorage.RemoveItemAsync(AuthTokenKey);
+
         await EnsureAuthorizationHeaderAsync();
     }
-    
-        public async Task<AuthResponseDto> ForgotPassword(ForgetPasswordDto model)
+
+    public async Task<AuthResponseDto> ForgotPassword(ForgetPasswordDto model)
     {
         try
         {
             var response = await HttpClient.PostAsJsonAsync("api/user/forgot-password", model);
-            
+
             var responseBody = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
-            
+
             if (response.IsSuccessStatusCode)
             {
-                return new AuthResponseDto 
-                { 
-                    IsSuccess = true, 
-                    Message = "If an account with that email exists, a password reset link has been sent." 
+                return new AuthResponseDto
+                {
+                    IsSuccess = true,
+                    Message = "If an account with that email exists, a password reset link has been sent."
                 };
             }
-            
-            return responseBody ?? new AuthResponseDto 
-            { 
-                IsSuccess = false, 
-                Message = "An unexpected error occurred during password reset initiation." 
+
+            return responseBody ?? new AuthResponseDto
+            {
+                IsSuccess = false,
+                Message = "An unexpected error occurred during password reset initiation."
             };
         }
         catch (HttpRequestException)
         {
-            return new AuthResponseDto 
-            { 
-                IsSuccess = false, 
-                Message = "API connection error. The server is unreachable." 
+            return new AuthResponseDto
+            {
+                IsSuccess = false,
+                Message = "API connection error. The server is unreachable."
             };
         }
     }
 
-     public async Task<AuthResponseDto> ResetPassword(ResetPasswordDto model)
+    public async Task<AuthResponseDto> ResetPassword(ResetPasswordDto model)
     {
         try
         {
             var response = await HttpClient.PostAsJsonAsync("api/user/reset-password", model);
-            
+
             var authResponse = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
 
             if (response.IsSuccessStatusCode)
             {
-                return authResponse ?? new AuthResponseDto 
-                { 
-                    IsSuccess = true, 
-                    Message = "Password has been successfully reset. You can now log in." 
+                return authResponse ?? new AuthResponseDto
+                {
+                    IsSuccess = true,
+                    Message = "Password has been successfully reset. You can now log in."
                 };
             }
-            
-            return authResponse ?? new AuthResponseDto 
-            { 
-                IsSuccess = false, 
-                Message = $"Password reset failed. Check token validity and password strength. Status: {response.StatusCode}." 
+
+            return authResponse ?? new AuthResponseDto
+            {
+                IsSuccess = false,
+                Message = $"Password reset failed. Check token validity and password strength. Status: {response.StatusCode}."
             };
         }
         catch (HttpRequestException)
         {
-            return new AuthResponseDto 
-            { 
-                IsSuccess = false, 
-                Message = "API connection error. The server is unreachable." 
+            return new AuthResponseDto
+            {
+                IsSuccess = false,
+                Message = "API connection error. The server is unreachable."
             };
         }
     }

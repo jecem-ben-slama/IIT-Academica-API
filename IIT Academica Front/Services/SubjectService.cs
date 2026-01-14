@@ -7,7 +7,7 @@ namespace IIT_Academica_Front.Services
 {
     // Make sure to define the necessary DTOs in IIT_Academica_Front.Models:
     // SubjectDTO, CreateSubjectDto, UpdateSubjectDTO, ApiErrorResponse
-    
+
     public class SubjectService
     {
         private readonly HttpClient _httpClient;
@@ -33,25 +33,25 @@ namespace IIT_Academica_Front.Services
         }
 
         // --- READ ALL (Admin) ---
-        
+
         /// <summary>
         /// Retrieves all subjects with teacher and enrollment details (Admin access).
         /// </summary>
         public async Task<List<SubjectDTO>?> GetAllSubjectsAsync()
         {
             await SetAuthorizationHeader();
-            
+
             var response = await _httpClient.GetAsync("api/Subjects/getAll");
 
             if (response.IsSuccessStatusCode)
             {
                 return await response.Content.ReadFromJsonAsync<List<SubjectDTO>>();
             }
-            
+
             // Handle Unauthorized/Forbidden
             if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
             {
-                await _authService.Logout(); 
+                await _authService.Logout();
             }
 
             // Throw exception for component error handling
@@ -67,17 +67,17 @@ namespace IIT_Academica_Front.Services
         public async Task<List<SubjectDTO>?> GetMySectionsAsync()
         {
             await SetAuthorizationHeader();
-            
+
             var response = await _httpClient.GetAsync("api/Subjects/mySections");
 
             if (response.IsSuccessStatusCode)
             {
                 return await response.Content.ReadFromJsonAsync<List<SubjectDTO>>();
             }
-            
+
             if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
             {
-                await _authService.Logout(); 
+                await _authService.Logout();
             }
 
             var errorContent = await response.Content.ReadAsStringAsync();
@@ -102,7 +102,7 @@ namespace IIT_Academica_Front.Services
 
             return null; // Return null on 404 Not Found or other non-success codes
         }
-        
+
         // --- CREATE (Admin) ---
 
         /// <summary>
@@ -123,7 +123,7 @@ namespace IIT_Academica_Front.Services
             // Handle 409 Conflict (Duplicate Registration Code)
             else if (response.StatusCode == HttpStatusCode.Conflict)
             {
-                var errorResponse = await response.Content.ReadFromJsonAsync<ApiErrorResponse>(); 
+                var errorResponse = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
                 // Throw a clear exception using the message from the controller
                 throw new InvalidOperationException(errorResponse?.Message ?? $"Subject creation failed: Registration Code already exists.");
             }
@@ -149,7 +149,7 @@ namespace IIT_Academica_Front.Services
             {
                 return; // 204 No Content is expected
             }
-            
+
             var content = await response.Content.ReadAsStringAsync();
             throw new HttpRequestException($"Subject update failed: API returned status code {(int)response.StatusCode}. Details: {content}");
         }

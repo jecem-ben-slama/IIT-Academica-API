@@ -25,7 +25,7 @@ public class SubjectRepository : ISubjectRepository
     {
         return await _context.Subjects
             .Include(ts => ts.Teacher)
-            .Include(ts => ts.Enrollments) 
+            .Include(ts => ts.Enrollments)
             .FirstOrDefaultAsync(ts => ts.Id == id);
     }
 
@@ -38,15 +38,15 @@ public class SubjectRepository : ISubjectRepository
     {
         return await _context.Subjects
             .Include(ts => ts.Teacher)
-            .Include(ts => ts.Enrollments) 
+            .Include(ts => ts.Enrollments)
             .ToListAsync();
     }
     public async Task<IEnumerable<Subject>> GetSubjectsByTeacherIdWithEnrollmentsAsync(int teacherId)
     {
         return await _context.Subjects
-            .Where(s => s.TeacherId == teacherId) 
-            .Include(s => s.Teacher)              
-            .Include(s => s.Enrollments)          
+            .Where(s => s.TeacherId == teacherId)
+            .Include(s => s.Teacher)
+            .Include(s => s.Enrollments)
             .AsNoTracking()
             .ToListAsync();
     }
@@ -54,7 +54,7 @@ public class SubjectRepository : ISubjectRepository
     public async Task<Subject> UpdateAsync(Subject Subject)
     {
         _context.Subjects.Update(Subject);
-        return Subject; 
+        return Subject;
     }
 
     public async Task<bool> DeleteAsync(int id)
@@ -62,6 +62,6 @@ public class SubjectRepository : ISubjectRepository
         var entity = await _context.Subjects.FindAsync(id);
         if (entity == null) return false;
         _context.Subjects.Remove(entity);
-        return true; 
+        return true;
     }
 }

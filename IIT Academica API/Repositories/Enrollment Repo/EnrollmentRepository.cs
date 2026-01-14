@@ -66,7 +66,7 @@ public class EnrollmentRepository : IEnrollmentRepository
 
     public async Task<bool> HasActiveEnrollmentsForSubject(int subjectId)
     {
-       
+
 
         return await _context.Enrollments
                              .AnyAsync(e => e.SubjectId == subjectId);

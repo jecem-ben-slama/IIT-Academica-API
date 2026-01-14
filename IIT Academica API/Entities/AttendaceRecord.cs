@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace IIT_Academica_API.Entities
+﻿namespace IIT_Academica_API.Entities
 {
     public class AttendanceRecord
     {

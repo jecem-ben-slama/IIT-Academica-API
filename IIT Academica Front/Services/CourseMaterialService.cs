@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Components.Forms; // For IBrowserFile
 
 namespace IIT_Academica_Front.Services
 {
-   
+
     public class CourseMaterialService
     {
         private readonly HttpClient _httpClient;
@@ -61,10 +61,10 @@ namespace IIT_Academica_Front.Services
             // The method requires specifying the size limit for security/performance
             const long maxFileSize = 1024 * 1024 * 50; // Example: 50 MB limit
             var fileStream = file.OpenReadStream(maxFileSize);
-            
+
             var fileContent = new StreamContent(fileStream);
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
-            
+
             // The name "file" MUST match the parameter name in the controller's UploadMaterial method: IFormFile file
             content.Add(fileContent, "file", file.Name);
 
@@ -76,7 +76,7 @@ namespace IIT_Academica_Front.Services
                 return await response.Content.ReadFromJsonAsync<CourseMaterialDto>()
                     ?? throw new InvalidOperationException("Failed to deserialize created course material.");
             }
-            
+
             // Handle specific status codes (e.g., 403 Forbidden, 400 Bad Request)
             var errorContent = await response.Content.ReadAsStringAsync();
             throw new HttpRequestException($"Material upload failed. Status: {(int)response.StatusCode}. Details: {errorContent}");
@@ -93,82 +93,82 @@ namespace IIT_Academica_Front.Services
         public async Task<List<CourseMaterialDto>?> GetMaterialsBySubjectAsync(int subjectId)
         {
             await SetAuthorizationHeader();
-            
+
             var response = await _httpClient.GetAsync($"api/CourseMaterials/subject/{subjectId}");
 
             if (response.IsSuccessStatusCode)
             {
                 return await response.Content.ReadFromJsonAsync<List<CourseMaterialDto>>();
             }
-            
+
             if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
             {
-                await _authService.Logout(); 
+                await _authService.Logout();
             }
 
             var errorContent = await response.Content.ReadAsStringAsync();
             throw new HttpRequestException($"Failed to fetch materials. Status: {response.StatusCode}. Details: {errorContent}");
         }
 
-       
+
         /// 
-       public async Task<CourseMaterialDto> UpdateMaterialAsync(
-    UpdateCourseMaterialDto
-     materialToUpdate, 
-    IBrowserFile? file = null)
-{
-    HttpResponseMessage response;
+        public async Task<CourseMaterialDto> UpdateMaterialAsync(
+     UpdateCourseMaterialDto
+      materialToUpdate,
+     IBrowserFile? file = null)
+        {
+            HttpResponseMessage response;
 
-    if (file != null)
-    {
-        // 1. Case: File is provided (Use multipart/form-data)
-        using var content = new MultipartFormDataContent();
+            if (file != null)
+            {
+                // 1. Case: File is provided (Use multipart/form-data)
+                using var content = new MultipartFormDataContent();
 
-        // Add the DTO fields as StringContent
-        content.Add(new StringContent(materialToUpdate.Id.ToString()), "Id");
-        content.Add(new StringContent(materialToUpdate.Title), "Title");
-        content.Add(new StringContent(materialToUpdate.Description), "Description");
+                // Add the DTO fields as StringContent
+                content.Add(new StringContent(materialToUpdate.Id.ToString()), "Id");
+                content.Add(new StringContent(materialToUpdate.Title), "Title");
+                content.Add(new StringContent(materialToUpdate.Description), "Description");
 
-        // Add the file as StreamContent
-        var fileStreamContent = new StreamContent(file.OpenReadStream(file.Size));
-        fileStreamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
-        
-        // Add the file to the content with the name 'file' (must match IFormFile parameter name in controller)
-        content.Add(fileStreamContent, "file", file.Name);
+                // Add the file as StreamContent
+                var fileStreamContent = new StreamContent(file.OpenReadStream(file.Size));
+                fileStreamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
 
-        // Send the PUT request
-        response = await _httpClient.PutAsync($"api/CourseMaterials/update/{materialToUpdate.Id}", content);
-    }
-    else
-    {
-        // 2. Case: Only metadata is changing (Use standard JSON PUT, but API is now expecting form data)
-        // To handle this, we still must send form data, even if the file part is empty. 
-        // We create a minimal MultipartFormDataContent with just the metadata.
-        using var content = new MultipartFormDataContent();
+                // Add the file to the content with the name 'file' (must match IFormFile parameter name in controller)
+                content.Add(fileStreamContent, "file", file.Name);
 
-        // Add the DTO fields as StringContent
-        content.Add(new StringContent(materialToUpdate.Id.ToString()), "Id");
-        content.Add(new StringContent(materialToUpdate.Title), "Title");
-        content.Add(new StringContent(materialToUpdate.Description), "Description");
+                // Send the PUT request
+                response = await _httpClient.PutAsync($"api/CourseMaterials/update/{materialToUpdate.Id}", content);
+            }
+            else
+            {
+                // 2. Case: Only metadata is changing (Use standard JSON PUT, but API is now expecting form data)
+                // To handle this, we still must send form data, even if the file part is empty. 
+                // We create a minimal MultipartFormDataContent with just the metadata.
+                using var content = new MultipartFormDataContent();
 
-        response = await _httpClient.PutAsync($"api/CourseMaterials/update/{materialToUpdate.Id}", content);
-    }
+                // Add the DTO fields as StringContent
+                content.Add(new StringContent(materialToUpdate.Id.ToString()), "Id");
+                content.Add(new StringContent(materialToUpdate.Title), "Title");
+                content.Add(new StringContent(materialToUpdate.Description), "Description");
 
-    // Throw an exception for bad status codes
-    response.EnsureSuccessStatusCode();
+                response = await _httpClient.PutAsync($"api/CourseMaterials/update/{materialToUpdate.Id}", content);
+            }
 
-    // Deserialize and return the updated material DTO
-    var updatedMaterial = await response.Content.ReadFromJsonAsync<CourseMaterialDto>();
-    
-    if (updatedMaterial == null)
-    {
-        throw new HttpRequestException("Failed to deserialize the updated course material.");
-    }
+            // Throw an exception for bad status codes
+            response.EnsureSuccessStatusCode();
 
-    return updatedMaterial;
-}
+            // Deserialize and return the updated material DTO
+            var updatedMaterial = await response.Content.ReadFromJsonAsync<CourseMaterialDto>();
 
-// stuident/teacher
+            if (updatedMaterial == null)
+            {
+                throw new HttpRequestException("Failed to deserialize the updated course material.");
+            }
+
+            return updatedMaterial;
+        }
+
+        // stuident/teacher
         public async Task<CourseMaterialDto?> GetMaterialByIdAsync(int id)
         {
             await SetAuthorizationHeader();
@@ -182,7 +182,7 @@ namespace IIT_Academica_Front.Services
 
             return null; // Return null on 404 Not Found
         }
-        
+
         // ===============================================
         // DELETE OPERATION (Teacher)
         // ===============================================
@@ -205,7 +205,7 @@ namespace IIT_Academica_Front.Services
             var content = await response.Content.ReadAsStringAsync();
             throw new HttpRequestException($"Material deletion failed. Status: {(int)response.StatusCode}. Details: {content}");
         }
-        
+
         // ===============================================
         // DOWNLOAD OPERATION (Student/Teacher)
         // ===============================================
@@ -220,7 +220,7 @@ namespace IIT_Academica_Front.Services
             // Use HttpCompletionOption.ResponseHeadersRead to get the response immediately 
             // and handle the stream manually, which is crucial for large files.
             return await _httpClient.GetAsync($"api/CourseMaterials/{materialId}/download", HttpCompletionOption.ResponseHeadersRead);
-            
+
             // The calling Blazor component will need to process the stream from the HttpResponseMessage 
             // and use JavaScript interop to save the file on the user's client machine.
         }

@@ -12,5 +12,5 @@ public class SubjectDTO
 
     public int TeacherId { get; set; }
     public string? TeacherFullName { get; set; }
-    public int EnrollmentCount { get; set; } 
+    public int EnrollmentCount { get; set; }
 }

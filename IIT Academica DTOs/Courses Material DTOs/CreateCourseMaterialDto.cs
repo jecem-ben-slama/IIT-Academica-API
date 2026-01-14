@@ -12,5 +12,5 @@ public class CreateCourseMaterialDto
     [StringLength(500)]
     public string? Description { get; set; }
 
-  
+
 }

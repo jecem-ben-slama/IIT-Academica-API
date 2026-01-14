@@ -10,7 +10,7 @@ namespace IIT_Academica_Front.Services
 {
     // Make sure to define the necessary DTOs in IIT_Academica_Front.Models:
     // EnrollmentRequestDto, EnrollmentResponseDto, StudentCourseDto, ApiErrorResponse
-    
+
     public class EnrollmentService
     {
         private readonly HttpClient _httpClient;
@@ -59,13 +59,13 @@ namespace IIT_Academica_Front.Services
             else if (response.StatusCode == HttpStatusCode.Conflict)
             {
                 // The API sends a JSON response like { Message: "..." }
-                var errorResponse = await response.Content.ReadFromJsonAsync<ApiErrorResponse>(); 
+                var errorResponse = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
                 // Throw a clear exception using the message from the controller
                 throw new InvalidOperationException(errorResponse?.Message ?? "You are already enrolled in this subject.");
             }
             else if (response.StatusCode == HttpStatusCode.BadRequest)
             {
-                 // Handle specific bad request errors (e.g., Invalid registration code, Subject not found)
+                // Handle specific bad request errors (e.g., Invalid registration code, Subject not found)
                 var errorResponse = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
                 throw new ArgumentException(errorResponse?.Message ?? "Enrollment failed due to bad data or invalid code.");
             }
@@ -86,17 +86,17 @@ namespace IIT_Academica_Front.Services
         public async Task<List<StudentCourseDto>?> GetStudentEnrollmentsAsync()
         {
             await SetAuthorizationHeader();
-            
+
             var response = await _httpClient.GetAsync("api/Enrollment/myCourses");
 
             if (response.IsSuccessStatusCode)
             {
                 return await response.Content.ReadFromJsonAsync<List<StudentCourseDto>>();
             }
-            
+
             if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
             {
-                await _authService.Logout(); 
+                await _authService.Logout();
             }
 
             var errorContent = await response.Content.ReadAsStringAsync();
@@ -123,7 +123,7 @@ namespace IIT_Academica_Front.Services
             }
             else if (response.StatusCode == HttpStatusCode.NotFound)
             {
-                 // The enrollment wasn't found or didn't belong to the student (as determined by the controller)
+                // The enrollment wasn't found or didn't belong to the student (as determined by the controller)
                 throw new KeyNotFoundException($"Enrollment ID {enrollmentId} not found or you are unauthorized to drop it.");
             }
             else

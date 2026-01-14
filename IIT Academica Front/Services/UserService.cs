@@ -7,7 +7,7 @@ namespace IIT_Academica_Front.Services
     public class UserService
     {
         private readonly HttpClient _httpClient;
-        private readonly AuthService _authService; 
+        private readonly AuthService _authService;
 
         public UserService(HttpClient httpClient, AuthService authService)
         {
@@ -27,17 +27,17 @@ namespace IIT_Academica_Front.Services
             // to prevent sending old/stale headers if the underlying client is reused.
             else
             {
-                 _httpClient.DefaultRequestHeaders.Authorization = null;
+                _httpClient.DefaultRequestHeaders.Authorization = null;
             }
         }
 
         // --- AUTHENTICATION/REGISTER (Usually in AuthService, but kept here) ---
 
-         public async Task<AuthResponseDto> RegisterAsync(RegisterDto model)
-         {
-             var response = await _httpClient.PostAsJsonAsync("api/user/register", model);
-             return await response.Content.ReadFromJsonAsync<AuthResponseDto>() ?? new AuthResponseDto { IsSuccess = false, Message = "API communication error." };
-         }
+        public async Task<AuthResponseDto> RegisterAsync(RegisterDto model)
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/user/register", model);
+            return await response.Content.ReadFromJsonAsync<AuthResponseDto>() ?? new AuthResponseDto { IsSuccess = false, Message = "API communication error." };
+        }
 
 
         // --- GET ALL USERS ---
@@ -45,7 +45,7 @@ namespace IIT_Academica_Front.Services
         public async Task<List<UserReadDto>?> GetAllUsersAsync()
         {
             await SetAuthorizationHeader();
-            
+
             try
             {
                 var response = await _httpClient.GetAsync("api/user/GetAllUsers");
@@ -54,9 +54,9 @@ namespace IIT_Academica_Front.Services
                 {
                     return await response.Content.ReadFromJsonAsync<List<UserReadDto>>();
                 }
-                
+
                 // Handle 401 Unauthorized or 403 Forbidden
-                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized || 
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized ||
                     response.StatusCode == System.Net.HttpStatusCode.Forbidden)
                 {
                     await _authService.Logout(); // Force logout
@@ -88,7 +88,7 @@ namespace IIT_Academica_Front.Services
 
             return null;
         }
-        
+
         // --- UPDATE USER ---
 
         public async Task<UserReadDto?> UpdateUserAsync(UserUpdateDto model)
@@ -101,51 +101,51 @@ namespace IIT_Academica_Front.Services
             {
                 return await response.Content.ReadFromJsonAsync<UserReadDto>();
             }
-            
+
             // Note: Consider throwing an exception here if the update fails, similar to DeleteUserAsync
             return null;
         }
 
         // --- DELETE USER ---
 
-       /// <summary>
-       /// Deletes a user by ID (requires Admin role). Maps to [HttpDelete("delete")].
-       /// Throws InvalidOperationException on Foreign Key Conflict (409).
-       /// </summary>
-       public async Task DeleteUserAsync(int id) 
-       {
-           await SetAuthorizationHeader();
+        /// <summary>
+        /// Deletes a user by ID (requires Admin role). Maps to [HttpDelete("delete")].
+        /// Throws InvalidOperationException on Foreign Key Conflict (409).
+        /// </summary>
+        public async Task DeleteUserAsync(int id)
+        {
+            await SetAuthorizationHeader();
 
-           // The API route is "api/user/delete", expecting the ID in the body
-           var deleteDto = new UserDeleteDto { Id = id };
-           
-           var request = new HttpRequestMessage(HttpMethod.Delete, "api/user/delete")
-           {
-               Content = JsonContent.Create(deleteDto)
-           };
-           
-           var response = await _httpClient.SendAsync(request);
-           
-           if (response.IsSuccessStatusCode)
-           {
-               return; // Success (200, 204)
-           }
-           
-           // Handle 409 Conflict (e.g., Foreign Key Violation)
-           else if (response.StatusCode == System.Net.HttpStatusCode.Conflict) 
-           {
-               var errorResponse = await response.Content.ReadFromJsonAsync<ApiErrorResponse>(); 
-               
-               // Throw a specific, client-friendly exception
-               throw new InvalidOperationException(errorResponse?.Message ?? "Cannot delete user due to existing linked records.");
-           }
-           
-           else 
-           {
-               // Handle other non-successful status codes (400, 404, 401, 500)
-               var content = await response.Content.ReadAsStringAsync();
-               throw new HttpRequestException($"Deletion failed: API returned status code {(int)response.StatusCode}. Details: {content}");
-           }
-       }
+            // The API route is "api/user/delete", expecting the ID in the body
+            var deleteDto = new UserDeleteDto { Id = id };
+
+            var request = new HttpRequestMessage(HttpMethod.Delete, "api/user/delete")
+            {
+                Content = JsonContent.Create(deleteDto)
+            };
+
+            var response = await _httpClient.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return; // Success (200, 204)
+            }
+
+            // Handle 409 Conflict (e.g., Foreign Key Violation)
+            else if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+            {
+                var errorResponse = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
+
+                // Throw a specific, client-friendly exception
+                throw new InvalidOperationException(errorResponse?.Message ?? "Cannot delete user due to existing linked records.");
+            }
+
+            else
+            {
+                // Handle other non-successful status codes (400, 404, 401, 500)
+                var content = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Deletion failed: API returned status code {(int)response.StatusCode}. Details: {content}");
+            }
+        }
     }
 }

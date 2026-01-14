@@ -10,10 +10,10 @@ public class SubjectsController : ControllerBase
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEnrollmentRepository _enrollmentRepository;
 
-    public SubjectsController(IUnitOfWork unitOfWork,IEnrollmentRepository enrollmentRepository)
+    public SubjectsController(IUnitOfWork unitOfWork, IEnrollmentRepository enrollmentRepository)
     {
         _unitOfWork = unitOfWork;
-        _enrollmentRepository=enrollmentRepository;
+        _enrollmentRepository = enrollmentRepository;
     }
 
     private ISubjectRepository Repository => _unitOfWork.Subjects;
@@ -133,13 +133,13 @@ public class SubjectsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteSubject(int id)
     {
-         var subject = await Repository.GetByIdAsync(id);
+        var subject = await Repository.GetByIdAsync(id);
         if (subject == null)
         {
             return NotFound();
         }
 
-       var hasEnrollments = await _enrollmentRepository.HasActiveEnrollmentsForSubject(id);
+        var hasEnrollments = await _enrollmentRepository.HasActiveEnrollmentsForSubject(id);
 
         if (hasEnrollments)
         {
@@ -159,7 +159,7 @@ public class SubjectsController : ControllerBase
             return NotFound();
         }
 
-        return NoContent(); 
+        return NoContent();
     }
 
     //^  MySections

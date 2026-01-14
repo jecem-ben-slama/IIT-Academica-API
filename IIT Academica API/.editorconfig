@@ -1,0 +1,21 @@
+# Top-most EditorConfig file
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+end_of_line = lf
+
+[*.cs]
+# --- ISTQB MAINTAINABILITY RULES ---
+# Enforce PascalCase for methods (Static analysis for naming)
+dotnet_naming_rule.methods_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.methods_should_be_pascal_case.symbols = method_symbols
+dotnet_naming_rule.methods_should_be_pascal_case.style = pascal_case_style
+
+# Use 'var' only when type is evident
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_diagnostic.IDE0005.severity = warning # Remove unused usings
+dotnet_diagnostic.IDE0001.severity = warning # Simplify name

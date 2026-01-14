@@ -11,7 +11,7 @@ namespace IIT_Academica_Front.Services
 {
     // Make sure to define the necessary DTOs and models:
     // NotificationDto, CreateNotificationDto, ApiErrorResponse
-    
+
     public class NotificationService
     {
         private readonly HttpClient _httpClient;
@@ -46,17 +46,17 @@ namespace IIT_Academica_Front.Services
         public async Task<List<NotificationDto>?> GetNotificationFeedAsync()
         {
             await SetAuthorizationHeader();
-            
+
             var response = await _httpClient.GetAsync("api/Notifications/feed");
 
             if (response.IsSuccessStatusCode)
             {
                 return await response.Content.ReadFromJsonAsync<List<NotificationDto>>();
             }
-            
+
             if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
             {
-                await _authService.Logout(); 
+                await _authService.Logout();
             }
 
             var errorContent = await response.Content.ReadAsStringAsync();
@@ -79,7 +79,7 @@ namespace IIT_Academica_Front.Services
 
             return null; // Return null on 404 Not Found
         }
-        
+
         // ===============================================
         // CREATE OPERATION (Admin)
         // ===============================================
@@ -88,8 +88,8 @@ namespace IIT_Academica_Front.Services
         /// Creates a new notification, handling file uploads via multipart/form-data.
         /// </summary>
         public async Task<NotificationDto> CreateNotificationAsync(
-            CreateNotificationDto dto, 
-            IBrowserFile? imageFile, 
+            CreateNotificationDto dto,
+            IBrowserFile? imageFile,
             IBrowserFile? attachedFile)
         {
             await SetAuthorizationHeader();
@@ -113,7 +113,7 @@ namespace IIT_Academica_Front.Services
             {
                 var fileContent = new StreamContent(attachedFile.OpenReadStream(attachedFile.Size));
                 fileContent.Headers.ContentType = new MediaTypeHeaderValue(attachedFile.ContentType);
-                   // The name must match the parameter name in the controller: "attachedFile"
+                // The name must match the parameter name in the controller: "attachedFile"
                 content.Add(fileContent, "attachedFile", attachedFile.Name);
             }
 
@@ -124,7 +124,7 @@ namespace IIT_Academica_Front.Services
                 return await response.Content.ReadFromJsonAsync<NotificationDto>()
                     ?? throw new InvalidOperationException("Failed to deserialize created notification.");
             }
-            
+
             var errorContent = await response.Content.ReadAsStringAsync();
             throw new HttpRequestException($"Notification creation failed. Status: {(int)response.StatusCode}. Details: {errorContent}");
         }
@@ -137,8 +137,8 @@ namespace IIT_Academica_Front.Services
         /// Updates a notification, handling file re-uploads via multipart/form-data.
         /// </summary>
         public async Task UpdateNotificationAsync(
-            int id, 
-            CreateNotificationDto dto, 
+            int id,
+            CreateNotificationDto dto,
             IBrowserFile? imageFile = null, // Optional new image file
             IBrowserFile? attachedFile = null) // Optional new attached file
         {
@@ -155,7 +155,7 @@ namespace IIT_Academica_Front.Services
             if (imageFile != null)
             {
                 // Use a 50MB limit (or your desired max file size) for the stream
-                const long maxFileSize = 1024 * 1024 * 50; 
+                const long maxFileSize = 1024 * 1024 * 50;
                 var imageContent = new StreamContent(imageFile.OpenReadStream(maxFileSize));
                 imageContent.Headers.ContentType = new MediaTypeHeaderValue(imageFile.ContentType);
                 // Field name must match the controller parameter: "imageFile"
@@ -166,7 +166,7 @@ namespace IIT_Academica_Front.Services
             if (attachedFile != null)
             {
                 // Use a 50MB limit (or your desired max file size) for the stream
-                const long maxFileSize = 1024 * 1024 * 50; 
+                const long maxFileSize = 1024 * 1024 * 50;
                 var fileContent = new StreamContent(attachedFile.OpenReadStream(maxFileSize));
                 fileContent.Headers.ContentType = new MediaTypeHeaderValue(attachedFile.ContentType);
                 // Field name must match the controller parameter: "attachedFile"
@@ -180,7 +180,7 @@ namespace IIT_Academica_Front.Services
             {
                 return; // 204 No Content is expected
             }
-            
+
             var errorContent = await response.Content.ReadAsStringAsync();
             throw new HttpRequestException($"Notification update failed. Status: {(int)response.StatusCode}. Details: {errorContent}");
         }
@@ -206,7 +206,7 @@ namespace IIT_Academica_Front.Services
             var content = await response.Content.ReadAsStringAsync();
             throw new HttpRequestException($"Notification deletion failed. Status: {(int)response.StatusCode}. Details: {content}");
         }
-        
+
         // ===============================================
         // DOWNLOAD OPERATIONS (All Users)
         // ===============================================
@@ -220,16 +220,16 @@ namespace IIT_Academica_Front.Services
             await SetAuthorizationHeader();
 
             return await _httpClient.GetAsync($"api/Notifications/{id}/download", HttpCompletionOption.ResponseHeadersRead);
-            
+
         }
 
-        
+
         public async Task<HttpResponseMessage> DownloadNotificationImageAsync(int id)
         {
             await SetAuthorizationHeader();
 
             return await _httpClient.GetAsync($"api/Notifications/{id}/downloadimage", HttpCompletionOption.ResponseHeadersRead);
-            
+
         }
     }
 }
