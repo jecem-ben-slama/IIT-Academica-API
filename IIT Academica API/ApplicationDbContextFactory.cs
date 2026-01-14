@@ -17,5 +17,6 @@ public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Applicati
         builder.UseSqlServer(connectionString);
 
         return new ApplicationDbContext(builder.Options);
+
     }
 }

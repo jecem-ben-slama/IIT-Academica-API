@@ -24,6 +24,7 @@
                 <InputText id="email-input" 
                            class="modern-input" 
                            @bind-Value="loginDto.Email" />
+                <ValidationMessage For="@(() => loginDto.Email)" />
             </div>
 
             @* ------------------- PASSWORD INPUT FIELD (ID ADDED) ------------------- *@
@@ -37,15 +38,17 @@
                                class="modern-input"
                                @bind-Value="loginDto.Password" />
                     
-                    @* Toggle Button (ID ADDED) *@
+                    @* Toggle Button (FIXED: Added @onmousedown:preventDefault) *@
                     <button id="password-toggle-btn" 
                             type="button" 
                             class="toggle-password" 
-                            @onclick="TogglePasswordVisibility">
+                            @onclick="TogglePasswordVisibility"
+                            @onmousedown:preventDefault> 
                         <i class="bi @(showPassword ? "bi-eye-slash" : "bi-eye")"></i>
                     </button>
 
                 </div>
+                <ValidationMessage For="@(() => loginDto.Password)" />
             </div>
 
             @* ------------------- FORGOT PASSWORD LINK (ID ADDED) ------------------- *@

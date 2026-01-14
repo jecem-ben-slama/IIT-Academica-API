@@ -9,17 +9,17 @@
 <div class="container p-4">
 
     <div class="d-flex justify-content-between align-items-center mb-5 pb-3 border-bottom">
-        @* ------------------- Title (ID ADDED) ------------------- *@
+        @* ------------------- Title ------------------- *@
         <h2 id="materials-page-title" class="fw-bold text-primary">
             <i class="bi bi-journal-check me-2"></i> Course Materials for @SubjectName
         </h2>
-        @* ------------------- Back Button (ID ADDED) ------------------- *@
+        @* ------------------- Back Button ------------------- *@
         <button id="back-to-courses-btn" class="btn btn-outline-secondary" @onclick="GoBack">
             <i class="bi bi-arrow-left me-2"></i> Back to Courses
         </button>
     </div>
 
-    @* ------------------- Loading State (ID ADDED) ------------------- *@
+    @* ------------------- Loading State ------------------- *@
     @if (IsLoading)
     {
         <div id="loading-state" class="text-center p-5 border rounded-3 bg-light">
@@ -30,19 +30,19 @@
         </div>
     }
 
-    @* ------------------- Error State (ID ADDED) ------------------- *@
+    @* ------------------- Error State ------------------- *@
     else if (LoadingError != null)
     {
         <div id="error-state" class="alert alert-danger p-4 shadow-sm" role="alert">
             <h4 class="alert-heading d-flex align-items-center"><i class="bi bi-x-octagon-fill me-2"></i> Loading Failed!</h4>
             <p>Could not load materials for the subject. Details: **@LoadingError**</p>
             <hr>
-            @* ------------------- Retry Button (ID ADDED) ------------------- *@
+            @* ------------------- Retry Button ------------------- *@
             <button id="retry-load-btn" class="btn btn-sm btn-danger mt-2" @onclick="LoadMaterialsAsync"><i class="bi bi-arrow-clockwise me-1"></i> Retry</button>
         </div>
     }
 
-    @* ------------------- Empty Data State (ID ADDED) ------------------- *@
+    @* ------------------- Empty Data State ------------------- *@
     else if (Materials == null || Materials.Count == 0)
     {
         <div id="no-materials-state" class="alert alert-info text-center p-4 shadow-sm" role="alert">
@@ -53,15 +53,15 @@
     }
     else
     {
-        @* ------------------- Materials List Container (ID ADDED) ------------------- *@
+        @* ------------------- Materials List Container ------------------- *@
         <div id="materials-list-container" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             @foreach (var material in Materials)
             {
                 <div class="col">
-                    @* ------------------- Material Card (ID ADDED) ------------------- *@
+                    @* ------------------- Material Card ------------------- *@
                     <div id="material-card-@material.Id" class="material-card h-100 shadow-sm border-primary">
                         <div class="card-body d-flex flex-column">
-                            @* ------------------- Material Title (ID ADDED) ------------------- *@
+                            @* ------------------- Material Title ------------------- *@
                             <h5 id="material-title-@material.Id" class="card-title text-primary fw-bold">
                                 <i class="bi bi-file-earmark-text me-2"></i> @material.Title
                             </h5>
@@ -69,10 +69,10 @@
                             <p class="card-text flex-grow-1 text-secondary">@material.Description</p>
                             
                             <div class="mt-auto pt-3 download-button-group">
-                                @* ------------------- Download Button (ID ADDED) ------------------- *@
+                                @* ------------------- Download Button ------------------- *@
                                 <button id="download-btn-@material.Id" class="btn btn-success w-100" 
                                         @onclick="() => DownloadMaterial(material)"
-                                        disabled="@(DownloadingMaterialId.HasValue && DownloadingMaterialId != material.Id)">
+                                        disabled="@(DownloadingMaterialId.HasValue)"> @* Disable all buttons if any download is active *@
 
                                     @if (material.Id == DownloadingMaterialId)
                                     {
@@ -94,40 +94,21 @@
 
 </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @code {
-    // Parameter passed via the route (e.g., /student/materials/10)
     [Parameter]
     public int SubjectId { get; set; }
 
     // --- State Management ---
     private List<CourseMaterialDto>? Materials { get; set; }
-    private string SubjectName { get; set; } = "Subject"; // Placeholder until subject data is fetched/passed
+    private string SubjectName { get; set; } = "Subject"; 
     private bool IsLoading { get; set; } = true;
     private string? LoadingError { get; set; }
-    private int? DownloadingMaterialId { get; set; } // Tracks which file is currently being downloaded
+    private int? DownloadingMaterialId { get; set; } 
 
     // --- Lifecycle ---
 
     protected override async Task OnInitializedAsync()
     {
-        // NOTE: Ideally, the parent component (Student.razor) would pass the SubjectName
-        // or a dedicated SubjectService would be injected to fetch it.
-        // For simplicity, we assume we can fetch material without knowing the name first.
         await LoadMaterialsAsync();
     }
 
@@ -141,12 +122,12 @@
         try
         {
             Materials = await MaterialService.GetMaterialsBySubjectAsync(SubjectId);
-            // Example of setting a placeholder name if DTOs don't contain it
-            if (Materials != null && Materials.Any())
-            {
-                // Assuming the DTO has a SubjectName property, or you'd use a dedicated service to get it
-                // SubjectName = Materials.First().SubjectName;
-            }
+            
+            // NOTE: If you fetch subject data separately, update SubjectName here:
+            // if (Materials != null && Materials.Any())
+            // {
+            //     SubjectName = Materials.First().SubjectName; // Example
+            // }
         }
         catch (HttpRequestException ex)
         {
@@ -162,11 +143,10 @@
         }
     }
 
-    // --- Download Logic ---
+    // --- Download Logic: Updated to use DotNetStreamReference and JS Interop ---
 
     private async Task DownloadMaterial(CourseMaterialDto material)
     {
-        // Prevent multiple downloads simultaneously
         if (DownloadingMaterialId.HasValue) return;
 
         DownloadingMaterialId = material.Id;
@@ -175,28 +155,34 @@
         try
         {
             // 1. Call the service to get the secure download response
-            var response = await MaterialService.DownloadMaterialAsync(material.Id);
+            // We assume DownloadMaterialAsync uses HttpCompletionOption.ResponseHeadersRead for streaming.
+            using var response = await MaterialService.DownloadMaterialAsync(material.Id);
 
-            response.EnsureSuccessStatusCode();
+            // Check if the server returned a success status (e.g., 200 OK)
+            response.EnsureSuccessStatusCode(); 
 
-            // 2. Read the file stream from the response content
+            // 2. Read the file stream directly from the response content
             using var stream = await response.Content.ReadAsStreamAsync();
             
-            // 3. Get file metadata for saving
-            var fileName = response.Content.Headers.ContentDisposition?.FileNameStar
+            // 3. Extract the file name from Content-Disposition header (Backend MUST set this)
+            string fileName = response.Content.Headers.ContentDisposition?.FileNameStar
                 ?? response.Content.Headers.ContentDisposition?.FileName
-                ?? material.Title; // Fallback to title
+                ?? $"{material.Title}.dat"; // Fallback with a generic extension
 
-            var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
-
-            // 4. Use JavaScript Interop to save the file on the client machine
-            // You need a client-side JS function (e.g., 'BlazorDownloadFile') to handle this.
-            await JSRuntime.InvokeVoidAsync("BlazorDownloadFile", fileName, contentType, stream);
-
+            // Remove quotes if present
+            fileName = fileName.Trim('"');
+            
+            // 4. Create a DotNetStreamReference to pass the stream to JavaScript
+            using var streamRef = new DotNetStreamReference(stream);
+            
+            // 5. Invoke the new JavaScript function to handle the download
+            // The JS function will read the stream, create a Blob, and trigger the save dialog.
+            await JSRuntime.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
         }
         catch (HttpRequestException ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Download failed: {ex.Message}");
+            // Handle errors like 403 Forbidden (Not Enrolled) or 404 Not Found
+            await JSRuntime.InvokeVoidAsync("alert", $"Download failed. Check access permissions or file availability. Details: {ex.Message}");
         }
         catch (Exception ex)
         {
@@ -213,7 +199,6 @@
 
     private void GoBack()
     {
-        // Navigates back to the main student page where 'MyCourses' or 'AllCourses' views exist
         Navigation.NavigateTo("/student");
     }
 }

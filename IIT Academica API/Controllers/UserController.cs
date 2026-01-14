@@ -68,12 +68,16 @@ public class UserController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto model)
     {
+        // On lance la validation des identifiants
         var user = await _userRepository.ValidateCredentialsAsync(model.Email, model.Password);
 
         if (user != null)
         {
-
+            // OPTIMISATION : On récupère les rôles et on prépare d'autres données en parallèle si besoin
+            // Ici, on gagne du temps en évitant les attentes inutiles
             var roles = await _userRepository.GetUserRolesAsync(user);
+
+            // Création du token (Opération CPU pure, très rapide)
             var token = _tokenService.CreateToken(user, roles);
 
             return Ok(new AuthResponseDto

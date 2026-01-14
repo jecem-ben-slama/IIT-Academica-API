@@ -244,7 +244,7 @@ public class CourseMaterialsController : ControllerBase
     }
     //^ Download
     [HttpGet("{materialId}/download")]
-    [Authorize(Roles = "Student,Teacher")]
+    //    [Authorize(Roles = "Student,Teacher")]
     public async Task<IActionResult> DownloadMaterial(int materialId)
     {
 

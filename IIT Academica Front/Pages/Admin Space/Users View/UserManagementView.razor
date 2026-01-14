@@ -119,8 +119,6 @@ else
 }
 
 @code {
-    // NOTE: For a real-world scenario, you might want to fetch the Students data internally 
-    // instead of receiving it as a parameter, so the RefreshList method works correctly.
     [Parameter] public List<UserReadDto>? Students { get; set; }
 
     private string SearchQuery { get; set; } = string.Empty;
